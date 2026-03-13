@@ -23,7 +23,7 @@ app.use(express.json({ limit: '10mb' }));
 const swaggerOptions = {
 definition: {
 openapi: '3.0.0',
-info: { title: 'CLEAR ERP v4.2 API — LSCM Ltd', version: '4.2.0', description: 'Consolidated Logistics ERP for Advanced Resource Planning' },
+info: { title: 'CLEAR ERP v4.2 API -- LSCM Ltd', version: '4.2.0', description: 'Consolidated Logistics ERP for Advanced Resource Planning' },
 components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } } },
 security: [{ bearerAuth: [] }],
 },
@@ -645,7 +645,7 @@ const allDocs = await prisma.document.findMany({ where: { jobId: doc.jobId } });
 if (allDocs.every(d => d.status === 'APPROVED')) {
 await prisma.job.update({ where: { id: doc.jobId }, data: { status: 'GREEN_LIGHT' } });
 await prisma.trackingEvent.create({
-data: { jobId: doc.jobId, eventType: 'GREEN_LIGHT_RECEIVED', description: 'All documents approved — GREEN LIGHT', triggeredById: req.user.id }
+data: { jobId: doc.jobId, eventType: 'GREEN_LIGHT_RECEIVED', description: 'All documents approved -- GREEN LIGHT', triggeredById: req.user.id }
 });
 }
 }

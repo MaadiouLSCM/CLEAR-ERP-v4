@@ -1,6 +1,6 @@
 // ============================================================
-// CLEAR ERP v4.2 — Master Schema
-// LSCM Ltd — Consolidated Logistics ERP
+// CLEAR ERP v4.2 -- Master Schema
+// LSCM Ltd -- Consolidated Logistics ERP
 // Aligned with Data Model v2
 // ============================================================
 
@@ -313,7 +313,7 @@ transportLegs   TransportLeg[]
 }
 
 // ============================================================
-// JOB — Central entity
+// JOB -- Central entity
 // ============================================================
 
 model Job {
@@ -740,7 +740,7 @@ createdAt       DateTime @default(now())
 }
 
 // ============================================================
-// FINANCE — Invoicing
+// FINANCE -- Invoicing
 // ============================================================
 
 model InvoiceLSCM {
