@@ -828,7 +828,7 @@ res.json(logs);
 
 app.post('/api/seed', async (_, res) => {
 try {
-const existing = await prisma.user.findUnique({ where: { email: 'admin@lscmltd.com' } });
+const existing = await prisma.user.findUnique({ where: { email: 'mgt@lscmltd.com' } });
 if (existing) return res.json({ message: 'Already seeded', userId: existing.id });
 
 const office = await prisma.lSCMOffice.create({
@@ -837,7 +837,7 @@ const office = await prisma.lSCMOffice.create({
 
 const passwordHash = await bcrypt.hash('admin2026', 12);
 const admin = await prisma.user.create({
-  data: { email: 'admin@lscmltd.com', passwordHash, name: 'Madiou DIALLO', role: 'ADMIN', officeId: office.id, phone: '+222 00000000' }
+  data: { email: 'mgt@lscmltd.com', passwordHash, name: 'Madiou DIALLO', role: 'ADMIN', officeId: office.id, phone: '+222 00000000' }
 });
 
 const snepco = await prisma.client.create({
