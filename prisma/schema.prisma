@@ -5,13 +5,13 @@
 // ============================================================
 
 generator client {
-provider      = “prisma-client-js”
-binaryTargets = [“native”, “debian-openssl-3.0.x”]
+provider      = "prisma-client-js"
+binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-provider = “postgresql”
-url      = env(“DATABASE_URL”)
+provider = "postgresql"
+url      = env("DATABASE_URL")
 }
 
 // ============================================================
@@ -236,7 +236,7 @@ validations       Validation[]
 auditLogs         AuditLog[]
 trackingEvents    TrackingEvent[]
 notifications     Notification[]
-documentsUploaded Document[]      @relation(“DocumentUploader”)
+documentsUploaded Document[]      @relation("DocumentUploader")
 timeEntries       TimeEntry[]
 }
 
@@ -330,10 +330,10 @@ status          POStatus @default(DRAFT)
 origin          String?
 destination     String?
 incoterm        String?
-priority        String?  @default(“NORMAL”)
+priority        String?  @default("NORMAL")
 description     String?
 estimatedValue  Float?
-currency        String?  @default(“USD”)
+currency        String?  @default("USD")
 createdAt       DateTime @default(now())
 updatedAt       DateTime @updatedAt
 closedAt        DateTime?
@@ -369,7 +369,7 @@ description     String?
 freightMode     FreightMode?
 status          POStatus @default(DRAFT)
 value           Float?
-currency        String?  @default(“USD”)
+currency        String?  @default("USD")
 itemCount       Int      @default(0)
 createdAt       DateTime @default(now())
 updatedAt       DateTime @updatedAt
@@ -388,7 +388,7 @@ lineNumber      Int
 partNumber      String?
 description     String
 quantity        Int      @default(1)
-unit            String?  @default(“EA”)
+unit            String?  @default("EA")
 weightKg        Float?
 volumeCbm       Float?
 hsCode          String?
@@ -411,7 +411,7 @@ item            PurchaseOrderItem @relation(fields: [itemId], references: [id])
 printedAt       DateTime?
 affixedAt       DateTime?
 scannedAt       DateTime?
-status          String   @default(“GENERATED”)
+status          String   @default("GENERATED")
 createdAt       DateTime @default(now())
 }
 
@@ -479,7 +479,7 @@ hub             String?
 totalWeightKg   Float?   @default(0)
 totalVolumeCbm  Float?   @default(0)
 totalPackages   Int?     @default(0)
-status          String   @default(“OPEN”)
+status          String   @default("OPEN")
 closedAt        DateTime?
 createdAt       DateTime @default(now())
 updatedAt       DateTime @updatedAt
@@ -520,7 +520,7 @@ etd             DateTime?
 eta             DateTime?
 atd             DateTime?
 ata             DateTime?
-status          String   @default(“PLANNED”)
+status          String   @default("PLANNED")
 createdAt       DateTime @default(now())
 updatedAt       DateTime @updatedAt
 
@@ -546,7 +546,7 @@ vesselName      String?
 voyageNumber    String?
 flightNumber    String?
 containerNumber String?
-status          String   @default(“PLANNED”)
+status          String   @default("PLANNED")
 createdAt       DateTime @default(now())
 updatedAt       DateTime @updatedAt
 }
@@ -563,7 +563,7 @@ status          BookingStatus @default(REQUESTED)
 requestedDate   DateTime?
 confirmedDate   DateTime?
 cost            Float?
-currency        String?  @default(“USD”)
+currency        String?  @default("USD")
 notes           String?
 createdAt       DateTime @default(now())
 updatedAt       DateTime @updatedAt
@@ -578,12 +578,12 @@ id              String   @id @default(cuid())
 declarationRef  String?  @unique
 jobId           String
 job             Job      @relation(fields: [jobId], references: [id])
-type            String   @default(“IMPORT”)
+type            String   @default("IMPORT")
 country         String?
 port            String?
 status          CustomsStatus @default(NOT_STARTED)
 dutyAmount      Float?
-dutyCurrency    String?  @default(“USD”)
+dutyCurrency    String?  @default("USD")
 dutyPaidDate    DateTime?
 clearedDate     DateTime?
 broker          String?
@@ -630,7 +630,7 @@ fileName        String?
 fileUrl         String?
 fileSize        Int?
 uploadedById    String?
-uploadedBy      User?    @relation(“DocumentUploader”, fields: [uploadedById], references: [id])
+uploadedBy      User?    @relation("DocumentUploader", fields: [uploadedById], references: [id])
 validatedAt     DateTime?
 notes           String?
 createdAt       DateTime @default(now())
@@ -728,12 +728,12 @@ jobId           String?
 job             Job?     @relation(fields: [jobId], references: [id])
 userId          String?
 user            User?    @relation(fields: [userId], references: [id])
-channel         String   @default(“EMAIL”)
+channel         String   @default("EMAIL")
 recipientEmail  String?
 recipientPhone  String?
 subject         String?
 body            String?
-status          String   @default(“QUEUED”)
+status          String   @default("QUEUED")
 sentAt          DateTime?
 errorMessage    String?
 createdAt       DateTime @default(now())
@@ -748,12 +748,12 @@ id              String   @id @default(cuid())
 invoiceNumber   String   @unique
 jobId           String
 job             Job      @relation(fields: [jobId], references: [id])
-type            String   @default(“STANDARD”)
+type            String   @default("STANDARD")
 status          InvoiceStatus @default(DRAFT)
 subtotal        Float    @default(0)
 tax             Float    @default(0)
 total           Float    @default(0)
-currency        String   @default(“USD”)
+currency        String   @default("USD")
 issuedDate      DateTime?
 dueDate         DateTime?
 paidDate        DateTime?
@@ -784,7 +784,7 @@ job             Job      @relation(fields: [jobId], references: [id])
 agentId         String
 agent           Agent    @relation(fields: [agentId], references: [id])
 amount          Float    @default(0)
-currency        String   @default(“USD”)
+currency        String   @default("USD")
 status          InvoiceStatus @default(DRAFT)
 receivedDate    DateTime?
 paidDate        DateTime?
@@ -834,7 +834,7 @@ name                    String
 category                String
 acquisitionDate         DateTime
 acquisitionCost         Float
-depreciationMethod      String   @default(“STRAIGHT_LINE”)
+depreciationMethod      String   @default("STRAIGHT_LINE")
 usefulLifeMonths        Int
 salvageValue            Float    @default(0)
 accumulatedDepreciation Float    @default(0)
