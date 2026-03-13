@@ -6,4 +6,4 @@ RUN npm install
 COPY . .
 RUN npx prisma generate
 RUN npm run build
-CMD npx prisma migrate deploy && node dist/main.js
+CMD npx prisma db push --accept-data-loss && node dist/main.js
