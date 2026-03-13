@@ -305,7 +305,7 @@ const job = await prisma.job.update({ where: { id: req.params.id }, data: req.bo
 await audit(req.user.id, 'UPDATE', 'Job', job.id, old, req.body);
 if (req.body.status && req.body.status !== old?.status) {
 await prisma.trackingEvent.create({
-data: { jobId: job.id, eventType: 'STATUS_CHANGE', description: `${old?.status} → ${req.body.status}`, triggeredById: req.user.id }
+data: { jobId: job.id, eventType: 'STATUS_CHANGE', description: `${old?.status}  ${req.body.status}`, triggeredById: req.user.id }
 });
 }
 res.json(job);
@@ -388,7 +388,7 @@ res.json(po);
 
 app.post('/api/purchase-orders/:poId/items', auth, async (req: any, res) => {
 try {
-const item = await prisma.purchaseOrderItem.create({ data: { …req.body, poId: req.params.poId } });
+const item = await prisma.purchaseOrderItem.create({ data: { req.body, poId: req.params.poId } });
 await prisma.purchaseOrder.update({ where: { id: req.params.poId }, data: { itemCount: { increment: 1 } } });
 res.status(201).json(item);
 } catch (e: any) { res.status(400).json({ error: e.message }); }
@@ -478,7 +478,7 @@ res.status(201).json(consol);
 
 app.post('/api/consolidations/:id/items', auth, async (req: any, res) => {
 try {
-const item = await prisma.consolidationItem.create({ data: { …req.body, consolidationId: req.params.id } });
+const item = await prisma.consolidationItem.create({ data: { req.body, consolidationId: req.params.id } });
 // Recalculate totals
 const items = await prisma.consolidationItem.findMany({ where: { consolidationId: req.params.id } });
 await prisma.consolidation.update({
@@ -531,7 +531,7 @@ res.json(shipment);
 
 app.post('/api/shipments/:shipmentId/legs', auth, async (req: any, res) => {
 try {
-const leg = await prisma.transportLeg.create({ data: { …req.body, shipmentId: req.params.shipmentId } });
+const leg = await prisma.transportLeg.create({ data: { req.body, shipmentId: req.params.shipmentId } });
 res.status(201).json(leg);
 } catch (e: any) { res.status(400).json({ error: e.message }); }
 });
@@ -542,7 +542,7 @@ res.status(201).json(leg);
 
 app.post('/api/shipments/:shipmentId/bookings', auth, async (req: any, res) => {
 try {
-const booking = await prisma.booking.create({ data: { …req.body, shipmentId: req.params.shipmentId } });
+const booking = await prisma.booking.create({ data: { req.body, shipmentId: req.params.shipmentId } });
 res.status(201).json(booking);
 } catch (e: any) { res.status(400).json({ error: e.message }); }
 });
@@ -630,7 +630,7 @@ res.json(docs);
 
 app.post('/api/documents', auth, async (req: any, res) => {
 try {
-const doc = await prisma.document.create({ data: { …req.body, uploadedById: req.user.id } });
+const doc = await prisma.document.create({ data: { req.body, uploadedById: req.user.id } });
 await audit(req.user.id, 'CREATE', 'Document', doc.id, null, req.body);
 res.status(201).json(doc);
 } catch (e: any) { res.status(400).json({ error: e.message }); }
@@ -638,8 +638,8 @@ res.status(201).json(doc);
 
 app.put('/api/documents/:id', auth, async (req: any, res) => {
 try {
-const doc = await prisma.document.update({ where: { id: req.params.id }, data: { …req.body, uploadedById: req.user.id } });
-// Check if all docs approved → trigger GREEN_LIGHT
+const doc = await prisma.document.update({ where: { id: req.params.id }, data: { req.body, uploadedById: req.user.id } });
+// Check if all docs approved  trigger GREEN_LIGHT
 if (req.body.status === 'APPROVED') {
 const allDocs = await prisma.document.findMany({ where: { jobId: doc.jobId } });
 if (allDocs.every(d => d.status === 'APPROVED')) {
@@ -701,7 +701,7 @@ res.json(validations);
 app.post('/api/validations', auth, async (req: any, res) => {
 try {
 const validation = await prisma.validation.create({
-data: { …req.body, validatedById: req.user.id, ipAddress: req.ip }
+data: { req.body, validatedById: req.user.id, ipAddress: req.ip }
 });
 await audit(req.user.id, 'VALIDATE', 'Validation', validation.id, null, req.body);
 res.status(201).json(validation);
@@ -727,7 +727,7 @@ res.json(events);
 
 app.post('/api/tracking', auth, async (req: any, res) => {
 try {
-const event = await prisma.trackingEvent.create({ data: { …req.body, triggeredById: req.user.id } });
+const event = await prisma.trackingEvent.create({ data: { req.body, triggeredById: req.user.id } });
 res.status(201).json(event);
 } catch (e: any) { res.status(400).json({ error: e.message }); }
 });
@@ -759,7 +759,7 @@ res.status(201).json(task);
 
 app.put('/api/tasks/:id', auth, async (req: any, res) => {
 try {
-const data: any = { …req.body };
+const data: any = { req.body };
 if (req.body.status === 'IN_PROGRESS' && !data.startedAt) data.startedAt = new Date();
 if (req.body.status === 'COMPLETED' && !data.completedAt) data.completedAt = new Date();
 const task = await prisma.task.update({ where: { id: req.params.id }, data });
@@ -789,7 +789,7 @@ res.status(201).json(invoice);
 
 app.post('/api/invoices/:id/line-items', auth, async (req: any, res) => {
 try {
-const item = await prisma.invoiceLineItem.create({ data: { …req.body, invoiceId: req.params.id } });
+const item = await prisma.invoiceLineItem.create({ data: { req.body, invoiceId: req.params.id } });
 // Recalculate totals
 const items = await prisma.invoiceLineItem.findMany({ where: { invoiceId: req.params.id } });
 const subtotal = items.reduce((s, i) => s + i.amount, 0);
@@ -855,12 +855,12 @@ if (existing) return res.json({ message: 'Already seeded', userId: existing.id }
 
 ```
 const office = await prisma.lSCMOffice.create({
-  data: { name: 'LSCM HQ', country: 'Mauritania', city: 'Nouakchott', address: 'Villa 784, îlot A, Tevragh Zeina', isHQ: true }
+  data: { name: 'LSCM HQ', country: 'Mauritania', city: 'Nouakchott', address: 'Villa 784, lot A, Tevragh Zeina', isHQ: true }
 });
 
 const passwordHash = await bcrypt.hash('admin2026', 12);
 const admin = await prisma.user.create({
-  data: { email: 'admin@lscmltd.com', passwordHash, name: 'Maâdiou DIALLO', role: 'ADMIN', officeId: office.id, phone: '+222 00000000' }
+  data: { email: 'admin@lscmltd.com', passwordHash, name: 'Madiou DIALLO', role: 'ADMIN', officeId: office.id, phone: '+222 00000000' }
 });
 
 const snepco = await prisma.client.create({
@@ -886,7 +886,7 @@ res.json({ message: 'Seeded successfully', admin: admin.id, office: office.id, c
 // ============================================================
 
 app.listen(PORT, () => {
-console.log(`✅ CLEAR ERP v4.2 running on port ${PORT}`);
-console.log(`📖 API docs: http://localhost:${PORT}/api/docs`);
-console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
+console.log(` CLEAR ERP v4.2 running on port ${PORT}`);
+console.log(` API docs: http://localhost:${PORT}/api/docs`);
+console.log(` Health: http://localhost:${PORT}/api/health`);
 });
