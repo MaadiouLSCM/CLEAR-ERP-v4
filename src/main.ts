@@ -80,33 +80,15 @@ version: '4.2.0'
 - @swagger
 - /api/auth/login:
 - post:
-- ```
   tags: [Auth]
-  ```
-- ```
   summary: Login
-  ```
-- ```
   requestBody:
-  ```
-- ```
     content:
-  ```
-- ```
       application/json:
-  ```
-- ```
         schema:
-  ```
-- ```
           properties:
-  ```
-- ```
             email: { type: string }
-  ```
-- ```
             password: { type: string }
-  ```
 
 */
 app.post('/api/auth/login', async (req, res) => {
@@ -134,12 +116,8 @@ res.json(user);
 - @swagger
 - /api/auth/register:
 - post:
-- ```
   tags: [Auth]
-  ```
-- ```
   summary: Register new user (Admin only)
-  ```
 
 */
 app.post('/api/auth/register', auth, async (req: any, res) => {
@@ -853,7 +831,6 @@ try {
 const existing = await prisma.user.findUnique({ where: { email: 'admin@lscmltd.com' } });
 if (existing) return res.json({ message: 'Already seeded', userId: existing.id });
 
-```
 const office = await prisma.lSCMOffice.create({
   data: { name: 'LSCM HQ', country: 'Mauritania', city: 'Nouakchott', address: 'Villa 784, lot A, Tevragh Zeina', isHQ: true }
 });
@@ -876,7 +853,6 @@ const total = await prisma.client.create({
 });
 
 res.json({ message: 'Seeded successfully', admin: admin.id, office: office.id, clients: [snepco.id, naoc.id, total.id] });
-```
 
 } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
