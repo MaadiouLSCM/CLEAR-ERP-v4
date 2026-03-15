@@ -96,11 +96,22 @@ export const getOffices = () => api.get('/offices');
 export const getCorridorDetail = (id) => api.get(`/corridors/${id}`);
 export const getExpediters = () => api.get('/users/expediters');
 
-// ── Finance ──
+// ── Finance & Billing (Phase 2 Enhanced) ──
 export const getFinanceDashboard = () => api.get('/finance/dashboard');
 export const getInvoices = (params = '') => api.get(`/finance/invoices${params ? '?' + params : ''}`);
+export const getInvoiceDetail = (id) => api.get(`/finance/invoices/${id}`);
+export const createInvoice = (data) => api.post('/finance/invoices', data);
+export const addInvoiceLine = (id, data) => api.post(`/finance/invoices/${id}/lines`, data);
+export const transitionInvoice = (id, status) => api.post(`/finance/invoices/${id}/transition`, { status });
+export const getAgentInvoices = (params = '') => api.get(`/finance/agent-invoices${params ? '?' + params : ''}`);
+export const createAgentInvoice = (data) => api.post('/finance/agent-invoices', data);
+export const approveAgentInvoice = (id, approvedBy) => api.post(`/finance/agent-invoices/${id}/approve`, { approvedBy });
 export const autoPrice = (jobId) => api.post(`/finance/auto-price/${jobId}`);
 export const getCostSheet = (jobId) => api.get(`/finance/cost-sheet/${jobId}`);
+export const getAgingReport = () => api.get('/finance/aging');
+export const getRevenueByClient = () => api.get('/finance/revenue/by-client');
+export const getRevenueByCorridor = () => api.get('/finance/revenue/by-corridor');
+export const getProfitability = () => api.get('/finance/profitability');
 
 // ── Communications ──
 export const getNotifications = () => api.get('/notifications?unreadOnly=true');

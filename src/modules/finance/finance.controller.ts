@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { FinanceService } from './finance.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -10,30 +10,63 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class FinanceController {
   constructor(private svc: FinanceService) {}
 
-  @Get('dashboard') @ApiOperation({ summary: 'Finance dashboard KPIs' })
+  // ── Dashboard ──
+  @Get('dashboard') @ApiOperation({ summary: 'Finance dashboard — AR, AP, revenue, profit, collection rate' })
   dashboard() { return this.svc.dashboard(); }
 
-  @Get('invoices') @ApiOperation({ summary: 'LSCM invoices (AR)' })
-  invoices(@Query() q) { return this.svc.invoices(q); }
+  // ── LSCM Invoices (AR) ──
+  @Get('invoices') @ApiOperation({ summary: 'List LSCM invoices with filters' })
+  invoices(@Query() q: any) { return this.svc.invoices(q); }
 
-  @Post('invoices') @ApiOperation({ summary: 'Create LSCM invoice' })
-  createInvoice(@Body() data) { return this.svc.createInvoice(data); }
+  @Get('invoices/:id') @ApiOperation({ summary: 'Invoice detail with line items and job' })
+  invoiceDetail(@Param('id') id: string) { return this.svc.invoiceDetail(id); }
 
-  @Post('invoices/:id/lines') @ApiOperation({ summary: 'Add line item to invoice' })
-  addLine(@Param('id') id: string, @Body() data) { return this.svc.addLineItem(id, data); }
+  @Post('invoices') @ApiOperation({ summary: 'Create LSCM invoice (auto-generates number)' })
+  createInvoice(@Body() data: any) { return this.svc.createInvoice(data); }
 
-  @Get('agent-invoices') @ApiOperation({ summary: 'Agent invoices (AP)' })
-  agentInvoices(@Query() q) { return this.svc.agentInvoices(q); }
+  @Post('invoices/:id/lines') @ApiOperation({ summary: 'Add line item to invoice (auto-recalc total)' })
+  addLine(@Param('id') id: string, @Body() data: any) { return this.svc.addLineItem(id, data); }
+
+  @Post('invoices/:id/transition') @ApiOperation({ summary: 'Transition invoice status (DRAFT→SENT→APPROVED→PAID)' })
+  transitionInvoice(@Param('id') id: string, @Body() body: { status: string }) {
+    return this.svc.transitionInvoice(id, body.status);
+  }
+
+  // ── Agent Invoices (AP) ──
+  @Get('agent-invoices') @ApiOperation({ summary: 'List agent invoices (AP)' })
+  agentInvoices(@Query() q: any) { return this.svc.agentInvoices(q); }
 
   @Post('agent-invoices') @ApiOperation({ summary: 'Record agent invoice' })
-  createAgent(@Body() data) { return this.svc.createAgentInvoice(data); }
+  createAgent(@Body() data: any) { return this.svc.createAgentInvoice(data); }
 
   @Post('agent-invoices/:id/approve') @ApiOperation({ summary: 'Approve agent invoice' })
-  approveAgent(@Param('id') id: string, @Body() body: { approvedBy: string }) { return this.svc.approveAgentInvoice(id, body.approvedBy); }
+  approveAgent(@Param('id') id: string, @Body() body: { approvedBy: string }) {
+    return this.svc.approveAgentInvoice(id, body.approvedBy);
+  }
 
-  @Get('cost-sheet/:jobId') @ApiOperation({ summary: 'Job cost sheet (auto-calculated)' })
+  @Post('agent-invoices/:id/transition') @ApiOperation({ summary: 'Transition agent invoice status' })
+  transitionAgent(@Param('id') id: string, @Body() body: { status: string; userId?: string }) {
+    return this.svc.transitionAgentInvoice(id, body.status, body.userId);
+  }
+
+  // ── Cost Sheet ──
+  @Get('cost-sheet/:jobId') @ApiOperation({ summary: 'Job cost sheet with agent breakdown (auto-calculated)' })
   costSheet(@Param('jobId') jobId: string) { return this.svc.costSheet(jobId); }
 
-  @Post('auto-price/:jobId') @ApiOperation({ summary: 'Billing engine: auto-price job from contract' })
+  // ── Billing Engine ──
+  @Post('auto-price/:jobId') @ApiOperation({ summary: 'Auto-price job from contract pricing profile' })
   autoPrice(@Param('jobId') jobId: string) { return this.svc.autoPrice(jobId); }
+
+  // ── Reports & Analytics ──
+  @Get('aging') @ApiOperation({ summary: 'AR aging report (current, 30, 60, 90, 90+ days)' })
+  aging() { return this.svc.agingReport(); }
+
+  @Get('revenue/by-client') @ApiOperation({ summary: 'Revenue breakdown by client' })
+  revenueByClient() { return this.svc.revenueByClient(); }
+
+  @Get('revenue/by-corridor') @ApiOperation({ summary: 'Revenue breakdown by corridor' })
+  revenueByCorridor() { return this.svc.revenueByCorridor(); }
+
+  @Get('profitability') @ApiOperation({ summary: 'Profitability report by job (margin analysis)' })
+  profitability() { return this.svc.profitabilityReport(); }
 }
