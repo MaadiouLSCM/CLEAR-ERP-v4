@@ -1,7 +1,7 @@
 // CLEAR ERP v4.2 — API Client
 // Base URL from env or proxy
 
-const BASE = import.meta.env.VITE_API_URL || '/api';
+const BASE = import.meta.env.VITE_API_URL || 'https://friendly-achievement-production.up.railway.app/api';
 
 const getToken = () => localStorage.getItem('clear_token');
 
