@@ -126,10 +126,15 @@ export const getUnreadCount = () => api.get('/notifications/count');
 export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`, {});
 export const markAllNotificationsRead = () => api.post('/notifications/read-all', {});
 
-// ── Compliance ──
+// ── Compliance (Phase 2.5 Enhanced) ──
 export const getCertifications = () => api.get('/compliance/certifications');
+export const getCertDetail = (id) => api.get(`/compliance/certifications/${id}`);
 export const getExpiring = (days = 90) => api.get(`/compliance/certifications/expiring?days=${days}`);
 export const getActiveRenewals = () => api.get('/compliance/renewals/active');
+export const getRenewalDetail = (id) => api.get(`/compliance/renewals/${id}`);
+export const runRenewalCheck = () => api.post('/compliance/renewals/check', {});
+export const createAudit = (data) => api.post('/compliance/audits', data);
+export const addFinding = (auditId, data) => api.post(`/compliance/audits/${auditId}/findings`, data);
 
 // ── Analytics ──
 export const getOpsDashboard = () => api.get('/analytics/dashboard');
