@@ -379,27 +379,25 @@ export class FinanceService {
 
     // Apply surcharges
     for (const sr of profile.surchargeRules) {
-      if (sr.isActive) {
-        const base = lines.reduce((s, l) => s + l.total, 0);
-        if (sr.calculationType === 'PERCENTAGE' && sr.value) {
-          lines.push({
-            billingInputId: billingInput.id,
-            rateLineRef: sr.id,
-            description: `Surcharge: ${sr.name} (${sr.value}%)`,
-            quantity: 1,
-            unitPrice: base * sr.value / 100,
-            total: base * sr.value / 100,
-          });
-        } else if (sr.calculationType === 'FIXED' && sr.value) {
-          lines.push({
-            billingInputId: billingInput.id,
-            rateLineRef: sr.id,
-            description: `Surcharge: ${sr.name}`,
-            quantity: 1,
-            unitPrice: sr.value,
-            total: sr.value,
-          });
-        }
+      const base = lines.reduce((s, l) => s + l.total, 0);
+      if (sr.calculationType === 'PERCENTAGE' && sr.percentage) {
+        lines.push({
+          billingInputId: billingInput.id,
+          rateLineRef: sr.id,
+          description: `Surcharge: ${sr.surchargeType} (${sr.percentage}%)`,
+          quantity: 1,
+          unitPrice: base * sr.percentage / 100,
+          total: base * sr.percentage / 100,
+        });
+      } else if (sr.calculationType === 'FIXED' && sr.amount) {
+        lines.push({
+          billingInputId: billingInput.id,
+          rateLineRef: sr.id,
+          description: `Surcharge: ${sr.surchargeType}`,
+          quantity: 1,
+          unitPrice: sr.amount,
+          total: sr.amount,
+        });
       }
     }
 
@@ -412,7 +410,7 @@ export class FinanceService {
     return {
       billingInputId: billingInput.id,
       profile: profile.contractRef,
-      currency: profile.currency,
+      currency: profile.accountingCurrency,
       linesGenerated: lines.length,
       grandTotal,
       lines,
