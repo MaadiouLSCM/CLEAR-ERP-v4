@@ -15,6 +15,7 @@ import { ComplianceModule } from './modules/compliance/compliance.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ConsolidationModule } from './modules/consolidation/consolidation.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
+import { OrganizationsModule } from './modules/organizations/organizations.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ReportingModule } from './modules/reporting/reporting.module';
     TrackingModule, ShipmentsModule, WarehouseModule, FinanceModule,
     CommunicationsModule, ComplianceModule, AnalyticsModule,
     ConsolidationModule, ReportingModule,
+    OrganizationsModule, // Phase 1 — provides /organizations, /offices, /corridors, /users/expediters
   ],
   controllers: [HealthController],
   providers: [PrismaService],
