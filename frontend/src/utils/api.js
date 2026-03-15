@@ -137,10 +137,12 @@ export const getKPIs = () => api.get('/analytics/kpis');
 export const calculateKPIs = () => api.post('/analytics/kpis/calculate');
 export const getAlerts = () => api.get('/analytics/alerts');
 
-// ── Consolidation ──
+// ── Consolidation (Phase 2.4 Enhanced) ──
 export const getPendingRequests = () => api.get('/consolidation/requests');
 export const getRecommendations = () => api.get('/consolidation/recommendations');
 export const generateRecommendations = (corridorId, mode) => api.post('/consolidation/recommend', { corridorId, mode });
+export const acceptRecommendation = (id) => api.post(`/consolidation/recommendations/${id}/accept`, {});
+export const rejectRecommendation = (id, reason) => api.post(`/consolidation/recommendations/${id}/reject`, { reason });
 
 // ── Reporting ──
 export const getReportTypes = () => api.get('/reports/types');
