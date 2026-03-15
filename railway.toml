@@ -1,3 +1,4 @@
+# Phase 1 deployed - rebuild trigger
 [build]
 builder = "nixpacks"
 buildCommand = "npx prisma generate && npx nest build && ls -la dist/ && echo 'Build OK: dist/main.js exists'"
