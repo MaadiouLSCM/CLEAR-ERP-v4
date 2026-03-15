@@ -1,7 +1,7 @@
 {
   "name": "clear-erp-v5",
-  "version": "6.0.0",
-  "description": "CLEAR ERP v6 — NestJS Backend (Phase 0 + Phase 1 + Phase 2)",
+  "version": "7.0.0",
+  "description": "CLEAR ERP v7 — NestJS Backend (Phase 0-4)",
   "scripts": {
     "build": "npx prisma generate && nest build",
     "start": "nest start",
@@ -30,10 +30,13 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.1",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "nodemailer": "^6.9.0",
+    "pdfkit": "^0.14.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/nodemailer": "^6.4.14",
     "@types/node": "^20.11.0",
     "@types/passport-jwt": "^4.0.1",
     "ts-node": "^10.9.0"

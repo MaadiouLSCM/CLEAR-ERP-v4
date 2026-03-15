@@ -113,9 +113,18 @@ export const getRevenueByClient = () => api.get('/finance/revenue/by-client');
 export const getRevenueByCorridor = () => api.get('/finance/revenue/by-corridor');
 export const getProfitability = () => api.get('/finance/profitability');
 
-// ── Communications ──
+// ── Communications (Phase 2.3 Enhanced) ──
+export const getCommsDashboard = () => api.get('/communications/dashboard');
+export const getCommsTemplates = () => api.get('/communications/templates');
+export const triggerComms = (jobId, status, extraVars) => api.post(`/communications/trigger/${jobId}`, { status, extraVars });
+export const sendOperational = (templateKey, jobId, extraVars) => api.post('/communications/send-operational', { templateKey, jobId, extraVars });
+export const getEmails = (params = '') => api.get(`/emails${params ? '?' + params : ''}`);
+export const sendManualEmail = (data) => api.post('/emails', data);
+export const retryFailedEmails = () => api.post('/emails/retry-failed', {});
 export const getNotifications = () => api.get('/notifications?unreadOnly=true');
 export const getUnreadCount = () => api.get('/notifications/count');
+export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`, {});
+export const markAllNotificationsRead = () => api.post('/notifications/read-all', {});
 
 // ── Compliance ──
 export const getCertifications = () => api.get('/compliance/certifications');
