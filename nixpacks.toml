@@ -1,8 +1,5 @@
 [phases.setup]
-nixPkgs = ["...", "openssl"]
-aptPkgs = ["...", "openssl", "libssl-dev", "libssl3"]
+aptPkgs = ["openssl", "libssl-dev"]
 
-[variables]
-PRISMA_SCHEMA_ENGINE_TYPE = "binary"
-PRISMA_QUERY_ENGINE_TYPE = "binary"
-PRISMA_CLI_QUERY_ENGINE_TYPE = "binary"
+[phases.build]
+cmds = ["npx prisma generate && npx nest build && ls -la dist/ && echo 'Build OK'"]

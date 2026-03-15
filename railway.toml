@@ -1,10 +1,8 @@
-# Phase 1 deployed - rebuild trigger
 [build]
 builder = "nixpacks"
-buildCommand = "npx prisma generate && npx nest build && ls -la dist/ && echo 'Build OK: dist/main.js exists'"
+buildCommand = "npx prisma generate && npm run build"
 
 [deploy]
 startCommand = "npx prisma db push && npm run start:prod"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"

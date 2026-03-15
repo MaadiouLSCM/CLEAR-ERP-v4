@@ -1,5 +1,5 @@
-// CLEAR ERP v4.2 — API Client
-// Base URL from env or proxy
+// CLEAR ERP v6.0 — API Client
+// Phase 0 + Phase 1 + Phase 2 (Warehouse & FIFO)
 
 const RAILWAY_API = 'https://friendly-achievement-production.up.railway.app/api';
 const BASE = RAILWAY_API;
@@ -50,10 +50,12 @@ export const bulkQR = (jobId) => api.post(`/items/bulk-qr/${jobId}`);
 export const lookupQR = (code) => api.get(`/qr/${code}`);
 export const getBoxes = (jobId) => api.get(`/boxes?jobId=${jobId}`);
 
-// ── Documents ──
+// ── Documents (Phase 1 Enhanced) ──
 export const getDocuments = (jobId) => api.get(`/documents?jobId=${jobId}`);
 export const getKitStatus = (jobId) => api.get(`/documents/kit-status/${jobId}`);
 export const getJCRCheck = (jobId) => api.get(`/documents/jcr-check/${jobId}`);
+export const generateDocument = (data) => api.post('/documents/generate', data);
+export const verifyDocument = (id) => api.post(`/documents/${id}/verify`, {});
 
 // ── Tasks ──
 export const getTasks = (params = '') => api.get(`/tasks${params ? '?' + params : ''}`);
@@ -68,12 +70,31 @@ export const getTimeline = (jobId) => api.get(`/tracking/timeline/${jobId}`);
 export const getShipments = (params = '') => api.get(`/shipments${params ? '?' + params : ''}`);
 export const getCorridors = () => api.get('/corridors');
 
-// ── Warehouse ──
+// ── Warehouse & FIFO (Phase 2 Enhanced) ──
 export const getHubs = () => api.get('/hubs');
 export const getHub = (id) => api.get(`/hubs/${id}`);
 export const getHubCapacity = (id) => api.get(`/hubs/${id}/capacity`);
-export const getStock = (hubId) => api.get(`/stock?hubId=${hubId}`);
-export const getQueue = (hubId, corridorId) => api.get(`/queue?hubId=${hubId}&corridorId=${corridorId}`);
+export const getHubCapacityHistory = (id, days = 30) => api.get(`/hubs/${id}/capacity-history?days=${days}`);
+export const takeSnapshot = (id) => api.post(`/hubs/${id}/snapshot`, {});
+export const getStock = (hubId, status) => api.get(`/stock?hubId=${hubId}${status ? '&status=' + status : ''}`);
+export const getStockSummary = (hubId) => api.get(`/stock/summary?hubId=${hubId}`);
+export const receiveStock = (data) => api.post('/stock/receive', data);
+export const dispatchStock = (id, notes) => api.post(`/stock/${id}/dispatch`, { notes });
+export const transferStock = (id, toZoneId, reason) => api.post(`/stock/${id}/transfer`, { toZoneId, reason });
+export const getStockMovements = (id) => api.get(`/stock/${id}/movements`);
+export const getQueue = (hubId, corridorId) => api.get(`/queue?hubId=${hubId}${corridorId ? '&corridorId=' + corridorId : ''}`);
+export const addToQueue = (queueId, stockItemId) => api.post(`/queue/${queueId}/add`, { stockItemId });
+export const recalculateQueue = (queueId) => api.post(`/queue/${queueId}/recalculate`, {});
+export const overridePriority = (posId, override, reason, userId) => api.post(`/queue/position/${posId}/override`, { override, reason, userId });
+export const getFIFOViolations = (hubId) => api.get(`/fifo-violations${hubId ? '?hubId=' + hubId : ''}`);
+export const runNightlyBatch = () => api.post('/warehouse/nightly-batch', {});
+
+// ── Organizations (Phase 1) ──
+export const getOrganizations = (type) => api.get(`/organizations${type ? '?type=' + type : ''}`);
+export const getOrganization = (id) => api.get(`/organizations/${id}`);
+export const getOffices = () => api.get('/offices');
+export const getCorridorDetail = (id) => api.get(`/corridors/${id}`);
+export const getExpediters = () => api.get('/users/expediters');
 
 // ── Finance ──
 export const getFinanceDashboard = () => api.get('/finance/dashboard');
