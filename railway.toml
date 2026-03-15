@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "npx prisma generate && npx nest build && ls -la dist/ && echo 'Build OK: dist/main.js exists'"
 
 [deploy]
-startCommand = "npx prisma db push --force-reset && npm run start:prod"
+startCommand = "npx prisma db push --force-reset && npx prisma db seed && npm run start:prod"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
