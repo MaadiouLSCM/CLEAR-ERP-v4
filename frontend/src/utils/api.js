@@ -160,3 +160,22 @@ export const getProcurementDashboard = () => api.get('/procurement/dashboard');
 export const getAgentScorecards = (agentName) => api.get(`/procurement/scorecards${agentName ? '?agentName=' + agentName : ''}`);
 export const getLaneRisk = (corridorId) => api.get(`/procurement/lane-risk${corridorId ? '?corridorId=' + corridorId : ''}`);
 export const getAgentComparison = (corridorId) => api.get(`/procurement/comparison/${corridorId}`);
+
+// ── Portal — Client (Phase 3.1) ──
+export const clientJobs = (clientId) => api.get(`/portal/client/${clientId}/jobs`);
+export const clientJobDetail = (clientId, jobId) => api.get(`/portal/client/${clientId}/jobs/${jobId}`);
+export const clientDocuments = (clientId) => api.get(`/portal/client/${clientId}/documents`);
+export const clientDashboard = (clientId) => api.get(`/portal/client/${clientId}/dashboard`);
+
+// ── Portal — Agent (Phase 3.2) ──
+export const agentTasks = (status) => api.get(`/portal/agent/tasks${status ? '?status=' + status : ''}`);
+export const agentCompleteTask = (taskId, notes) => api.post(`/portal/agent/tasks/${taskId}/complete`, { notes });
+export const agentDashboard = () => api.get('/portal/agent/dashboard');
+
+// ── Booking (Phase 3.3) ──
+export const createBooking = (jobId, data) => api.post(`/portal/booking/${jobId}`, data);
+
+// ── KPI Visibility (Phase 3.4) ──
+export const kpiByClient = () => api.get('/portal/kpi/by-client');
+export const kpiByCorridor = () => api.get('/portal/kpi/by-corridor');
+export const kpiSLA = () => api.get('/portal/kpi/sla');

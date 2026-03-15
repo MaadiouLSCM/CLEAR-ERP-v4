@@ -1,23 +1,23 @@
 import React from 'react';
 import { T, FONTS } from '../../utils/theme';
-import { SectionTitle, EmptyState } from '../Layout/PageShell';
+import { EmptyState } from '../Layout/PageShell';
+import { api } from '../../utils/api';
 
+const card = { background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 };
+const loader = <EmptyState icon="📈" title="Loading..." sub="" />;
 
 export default function UnitEconomics() {
-  
-  return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-        <span style={{ fontSize: 28 }}>$</span>
-        <div>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, color: T.text }}>Unit Economics</div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: T.textDim }}>67 cost codes + 19 segmentation dimensions</div>
-        </div>
-      </div>
-      
-      <div style={{ background: T.surface, border: "1px solid " + T.border, borderRadius: 12, padding: 24 }}>
-        <EmptyState icon="$" title="Module Ready" sub="Connect to API endpoints to populate this view" />
-      </div>
-    </div>
-  );
+  const [p, setP] = React.useState(null);
+  React.useEffect(() => { api.get('/finance/profitability').then(setP).catch(()=>{}); }, []);
+  if (!p) return loader;
+  return (<div style={card}>
+    <div style={{fontFamily:FONTS.display,fontSize:14,fontWeight:600,color:T.text,marginBottom:12}}>Profitability Analysis</div>
+    {(Array.isArray(p)?p:p.jobs||[]).slice(0,20).map((j,i)=>(<div key={i} style={{display:'flex',gap:10,padding:'6px 0',borderBottom:`1px solid ${T.border}`}}>
+      <span style={{fontFamily:FONTS.mono,fontSize:12,color:T.gold,minWidth:90}}>{j.jobRef||j.ref||'—'}</span>
+      <span style={{fontFamily:FONTS.body,fontSize:12,color:T.text,flex:1}}>{j.client||'—'}</span>
+      <span style={{fontFamily:FONTS.mono,fontSize:11,color:T.green}}>Rev: ${(j.revenue||0).toLocaleString()}</span>
+      <span style={{fontFamily:FONTS.mono,fontSize:11,color:T.red}}>Cost: ${(j.cost||0).toLocaleString()}</span>
+      <span style={{fontFamily:FONTS.mono,fontSize:11,color:(j.margin||0)>=0?T.green:T.red}}>Margin: {(j.marginPct||0).toFixed(0)}%</span>
+    </div>))}
+  </div>);
 }
