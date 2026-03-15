@@ -154,3 +154,9 @@ export const getReportTypes = () => api.get('/reports/types');
 export const generateDSR = () => api.get('/reports/dsr');
 export const generateWSR = () => api.get('/reports/wsr');
 export const generateJCR = (jobId) => api.get(`/reports/jcr/${jobId}`);
+
+// ── Procurement (Phase 2.7) ──
+export const getProcurementDashboard = () => api.get('/procurement/dashboard');
+export const getAgentScorecards = (agentName) => api.get(`/procurement/scorecards${agentName ? '?agentName=' + agentName : ''}`);
+export const getLaneRisk = (corridorId) => api.get(`/procurement/lane-risk${corridorId ? '?corridorId=' + corridorId : ''}`);
+export const getAgentComparison = (corridorId) => api.get(`/procurement/comparison/${corridorId}`);

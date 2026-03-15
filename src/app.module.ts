@@ -16,6 +16,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ConsolidationModule } from './modules/consolidation/consolidation.module';
 import { ReportingModule } from './modules/reporting/reporting.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { ProcurementModule } from './modules/procurement/procurement.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     CommunicationsModule, ComplianceModule, AnalyticsModule,
     ConsolidationModule, ReportingModule,
     OrganizationsModule, // Phase 1 — provides /organizations, /offices, /corridors, /users/expediters
+    ProcurementModule, // Phase 2.7 — agent scorecard, lane risk, RFQ
   ],
   controllers: [HealthController],
   providers: [PrismaService],
