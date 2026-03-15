@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ComplianceService } from './compliance.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -36,4 +36,17 @@ export class ComplianceController {
 
   @Post('audits/:id/findings') @ApiOperation({ summary: 'Add finding to audit' })
   addFinding(@Param('id') id: string, @Body() data) { return this.svc.addFinding(id, data); }
+
+  @Get('ncrs') @ApiOperation({ summary: 'List NCRs' })
+  @ApiQuery({ name: 'status', required: false }) @ApiQuery({ name: 'severity', required: false }) @ApiQuery({ name: 'jobId', required: false })
+  ncrs(@Query() q) { return this.svc.listNCRs(q); }
+
+  @Get('ncrs/:id') @ApiOperation({ summary: 'NCR detail' })
+  ncrDetail(@Param('id') id: string) { return this.svc.ncrDetail(id); }
+
+  @Post('ncrs') @ApiOperation({ summary: 'Create NCR' })
+  createNCR(@Body() data) { return this.svc.createNCR(data); }
+
+  @Patch('ncrs/:id') @ApiOperation({ summary: 'Update NCR (status, containment, etc.)' })
+  updateNCR(@Param('id') id: string, @Body() data) { return this.svc.updateNCR(id, data); }
 }

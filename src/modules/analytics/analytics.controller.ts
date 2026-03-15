@@ -24,4 +24,16 @@ export class AnalyticsController {
 
   @Post('alerts/:id/acknowledge') @ApiOperation({ summary: 'Acknowledge alert' })
   acknowledge(@Param('id') id: string, @Req() req) { return this.svc.acknowledgeAlert(id, req.user.userId); }
+
+  @Get('hr') @ApiOperation({ summary: 'HR dashboard — headcount, utilization, by dept/office' })
+  hr() { return this.svc.hrDashboard(); }
+
+  @Get('hr/employees') @ApiOperation({ summary: 'List employees' })
+  employees() { return this.svc.listEmployees(); }
+
+  @Get('hr/time-entries') @ApiOperation({ summary: 'Time entries (optionally by job)' })
+  timeEntries(@Query('jobRef') jobRef?: string) { return this.svc.timeEntriesByJob(jobRef); }
+
+  @Get('co2') @ApiOperation({ summary: 'CO2 emissions dashboard — GLEC Framework estimates' })
+  co2() { return this.svc.co2Dashboard(); }
 }

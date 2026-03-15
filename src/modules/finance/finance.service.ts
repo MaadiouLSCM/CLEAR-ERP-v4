@@ -441,4 +441,38 @@ export class FinanceService {
       status: j.status,
     }));
   }
+
+  // ── Budget ──
+  async listBudgets(year?: number) {
+    return this.prisma.entityBudget.findMany({ where: year ? { year } : {}, include: { office: true }, orderBy: [{ year: 'desc' }, { type: 'asc' }] });
+  }
+
+  async createBudget(data: any) {
+    return this.prisma.entityBudget.create({ data, include: { office: true } });
+  }
+
+  async updateBudget(id: string, data: any) {
+    return this.prisma.entityBudget.update({ where: { id }, data, include: { office: true } });
+  }
+
+  // ── Treasury (cash flow overview from invoices) ──
+  async treasuryDashboard() {
+    const [arTotal, arPaid, apTotal, apPaid] = await Promise.all([
+      this.prisma.invoiceLSCM.aggregate({ _sum: { total: true }, where: { status: { not: 'PAID' } } }),
+      this.prisma.invoiceLSCM.aggregate({ _sum: { total: true }, where: { status: 'PAID' } }),
+      this.prisma.invoiceAgent.aggregate({ _sum: { amount: true }, where: { status: { not: 'PAID' } } }),
+      this.prisma.invoiceAgent.aggregate({ _sum: { amount: true }, where: { status: 'PAID' } }),
+    ]);
+    const overdue = await this.prisma.invoiceLSCM.findMany({
+      where: { status: { not: 'PAID' }, dueDate: { lt: new Date() } },
+      include: { client: true, job: true },
+      orderBy: { dueDate: 'asc' },
+    });
+    return {
+      receivables: { outstanding: arTotal._sum.total || 0, collected: arPaid._sum.total || 0 },
+      payables: { outstanding: apTotal._sum.amount || 0, paid: apPaid._sum.amount || 0 },
+      overdueInvoices: overdue.map(i => ({ invoiceNumber: i.invoiceNumber, client: i.client?.name, amount: i.total, currency: i.currency, dueDate: i.dueDate, jobRef: i.job?.ref })),
+      overdueTotal: overdue.reduce((s, i) => s + i.total, 0),
+    };
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { FinanceService } from './finance.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -69,4 +69,17 @@ export class FinanceController {
 
   @Get('profitability') @ApiOperation({ summary: 'Profitability report by job (margin analysis)' })
   profitability() { return this.svc.profitabilityReport(); }
+
+  @Get('budgets') @ApiOperation({ summary: 'List budgets' })
+  @ApiQuery({ name: 'year', required: false })
+  budgets(@Query('year') year?: string) { return this.svc.listBudgets(year ? parseInt(year) : undefined); }
+
+  @Post('budgets') @ApiOperation({ summary: 'Create budget' })
+  createBudget(@Body() data) { return this.svc.createBudget(data); }
+
+  @Patch('budgets/:id') @ApiOperation({ summary: 'Update budget' })
+  updateBudget(@Param('id') id: string, @Body() data) { return this.svc.updateBudget(id, data); }
+
+  @Get('treasury') @ApiOperation({ summary: 'Treasury dashboard — AR/AP, overdue, cash position' })
+  treasury() { return this.svc.treasuryDashboard(); }
 }

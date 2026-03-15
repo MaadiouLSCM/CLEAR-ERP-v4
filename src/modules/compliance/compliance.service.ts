@@ -113,4 +113,27 @@ export class ComplianceService {
   async addFinding(auditId: string, data: any) {
     return this.prisma.auditFinding.create({ data: { ...data, auditId } });
   }
+
+  // ── QMS: Non-Conformity Reports ──
+  async listNCRs(filters: { status?: string; severity?: string; jobId?: string }) {
+    const w: any = {};
+    if (filters.status) w.status = filters.status;
+    if (filters.severity) w.severity = filters.severity;
+    if (filters.jobId) w.jobId = filters.jobId;
+    return this.prisma.nonConformity.findMany({ where: w, include: { job: true }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async ncrDetail(id: string) {
+    return this.prisma.nonConformity.findUnique({ where: { id }, include: { job: true } });
+  }
+
+  async createNCR(data: any) {
+    const count = await this.prisma.nonConformity.count();
+    const ncrNumber = `NCR-${String(count + 1).padStart(4, '0')}`;
+    return this.prisma.nonConformity.create({ data: { ...data, ncrNumber }, include: { job: true } });
+  }
+
+  async updateNCR(id: string, data: any) {
+    return this.prisma.nonConformity.update({ where: { id }, data, include: { job: true } });
+  }
 }

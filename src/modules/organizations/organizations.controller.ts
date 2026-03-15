@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Query, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { PrismaService } from '../../common/prisma.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -73,5 +73,44 @@ export class OrganizationsController {
       select: { id: true, name: true, email: true, role: true, officeId: true },
       orderBy: { name: 'asc' },
     });
+  }
+
+  // ── Commercial Pipeline (Opportunity + ClientQualification) ──
+  @Get('pipeline')
+  @ApiOperation({ summary: 'List opportunities (pipeline)' })
+  @ApiQuery({ name: 'stage', required: false })
+  async pipeline(@Query('stage') stage?: string) {
+    return this.prisma.opportunity.findMany({
+      where: stage ? { stage } : {},
+      include: { client: true },
+      orderBy: { expectedClose: 'asc' },
+    });
+  }
+
+  @Post('pipeline')
+  @ApiOperation({ summary: 'Create opportunity' })
+  async createOpportunity(@Body() data: any) {
+    return this.prisma.opportunity.create({ data, include: { client: true } });
+  }
+
+  @Patch('pipeline/:id')
+  @ApiOperation({ summary: 'Update opportunity (stage, value, etc.)' })
+  async updateOpportunity(@Param('id') id: string, @Body() data: any) {
+    return this.prisma.opportunity.update({ where: { id }, data, include: { client: true } });
+  }
+
+  @Get('qualifications')
+  @ApiOperation({ summary: 'List client qualifications (scores 0-100)' })
+  async qualifications() {
+    return this.prisma.clientQualification.findMany({
+      include: { client: true },
+      orderBy: { score: 'desc' },
+    });
+  }
+
+  @Post('qualifications')
+  @ApiOperation({ summary: 'Create/update client qualification score' })
+  async createQualification(@Body() data: any) {
+    return this.prisma.clientQualification.create({ data, include: { client: true } });
   }
 }

@@ -94,4 +94,88 @@ export class AnalyticsService {
     ]);
     return { totalJobs, activeJobs, deliveredThisMonth, byStatus: Object.fromEntries(byStatus.map(s => [s.status, s._count])) };
   }
+
+  // ── HR Analytics ──
+  async hrDashboard() {
+    const [employees, timeEntries] = await Promise.all([
+      this.prisma.employee.findMany({ include: { office: true } }),
+      this.prisma.timeEntry.findMany({ where: { date: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } }),
+    ]);
+    const active = employees.filter(e => e.status === 'ACTIVE');
+    const byDept: Record<string, number> = {};
+    const byOffice: Record<string, number> = {};
+    active.forEach(e => {
+      byDept[e.department] = (byDept[e.department] || 0) + 1;
+      const oName = e.office?.name || 'Unknown';
+      byOffice[oName] = (byOffice[oName] || 0) + 1;
+    });
+    const totalHours = timeEntries.reduce((s, t) => s + t.hours, 0);
+    const billableHours = timeEntries.filter(t => t.billable).reduce((s, t) => s + t.hours, 0);
+    return {
+      totalEmployees: employees.length, activeEmployees: active.length,
+      byDepartment: byDept, byOffice,
+      monthlyHours: Math.round(totalHours), billableHours: Math.round(billableHours),
+      utilizationPct: totalHours > 0 ? Math.round((billableHours / totalHours) * 100) : 0,
+    };
+  }
+
+  async listEmployees() {
+    return this.prisma.employee.findMany({ include: { office: true }, orderBy: [{ status: 'asc' }, { name: 'asc' }] });
+  }
+
+  async timeEntriesByJob(jobRef?: string) {
+    return this.prisma.timeEntry.findMany({
+      where: jobRef ? { jobRef } : {},
+      include: { user: true, employee: true },
+      orderBy: { date: 'desc' }, take: 100,
+    });
+  }
+
+  // ── CO2 Emissions (GLEC Framework estimates) ──
+  // SEA: ~10g CO2/tonne-km, AIR: ~500g/tonne-km, ROAD: ~62g/tonne-km
+  private readonly CO2_FACTORS: Record<string, number> = { SEA: 0.010, AIR: 0.500, ROAD: 0.062, RAIL: 0.022 };
+  private readonly DISTANCES: Record<string, number> = {
+    'France → Nigeria': 5200, 'Nigeria → France': 5200,
+    'Mauritania → South Africa': 7800, 'South Africa → Mauritania': 7800,
+    'France → Mauritania': 3400, 'Mauritania → France': 3400,
+    'Nigeria → Mauritania': 2800, 'Mauritania → Nigeria': 2800,
+  };
+
+  async co2Dashboard() {
+    const jobs = await this.prisma.job.findMany({
+      where: { status: { notIn: ['ABORTED'] } },
+      include: { corridor: true },
+    });
+    let totalKgCO2 = 0;
+    const byCorridor: Record<string, { kgCO2: number; jobs: number; tonnekm: number }> = {};
+    const byMode: Record<string, { kgCO2: number; jobs: number }> = {};
+
+    for (const j of jobs) {
+      const mode = j.transportMode || 'SEA';
+      const factor = this.CO2_FACTORS[mode] || 0.010;
+      const corridorName = j.corridor?.name || 'Unknown';
+      const distKm = this.DISTANCES[corridorName] || 5000; // default 5000km
+      const tonneKm = (j.totalWeightKg / 1000) * distKm;
+      const kgCO2 = tonneKm * factor;
+
+      totalKgCO2 += kgCO2;
+      if (!byCorridor[corridorName]) byCorridor[corridorName] = { kgCO2: 0, jobs: 0, tonnekm: 0 };
+      byCorridor[corridorName].kgCO2 += kgCO2;
+      byCorridor[corridorName].jobs++;
+      byCorridor[corridorName].tonnekm += tonneKm;
+
+      if (!byMode[mode]) byMode[mode] = { kgCO2: 0, jobs: 0 };
+      byMode[mode].kgCO2 += kgCO2;
+      byMode[mode].jobs++;
+    }
+
+    return {
+      totalKgCO2: Math.round(totalKgCO2),
+      totalTonnesCO2: Math.round(totalKgCO2 / 1000 * 100) / 100,
+      totalJobs: jobs.length,
+      byCorridor: Object.entries(byCorridor).map(([name, d]) => ({ corridor: name, kgCO2: Math.round(d.kgCO2), jobs: d.jobs, tonneKm: Math.round(d.tonnekm) })).sort((a, b) => b.kgCO2 - a.kgCO2),
+      byMode: Object.entries(byMode).map(([mode, d]) => ({ mode, kgCO2: Math.round(d.kgCO2), jobs: d.jobs })),
+      methodology: 'GLEC Framework v3 — estimated. SEA 10g/tkm, AIR 500g/tkm, ROAD 62g/tkm',
+    };
+  }
 }

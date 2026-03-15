@@ -52,4 +52,30 @@ export class ShipmentsService {
   async flightSchedule(corridorId: string) {
     return this.prisma.flightSchedule.findMany({ where: { corridorId } });
   }
+
+  // ── Customs Declarations ──
+  async listCustomsDeclarations(jobId?: string) {
+    return this.prisma.customsDeclaration.findMany({ where: jobId ? { jobId } : {}, include: { job: true }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createCustomsDeclaration(data: any) {
+    return this.prisma.customsDeclaration.create({ data, include: { job: true } });
+  }
+
+  async updateCustomsDeclaration(id: string, data: any) {
+    return this.prisma.customsDeclaration.update({ where: { id }, data, include: { job: true } });
+  }
+
+  // ── GreenLight Requests ──
+  async listGreenLights(jobId?: string) {
+    return this.prisma.greenLightRequest.findMany({ where: jobId ? { jobId } : {}, include: { job: true }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createGreenLight(data: any) {
+    return this.prisma.greenLightRequest.create({ data, include: { job: true } });
+  }
+
+  async approveGreenLight(id: string, approvedBy: string) {
+    return this.prisma.greenLightRequest.update({ where: { id }, data: { status: 'APPROVED', approvedBy, approvedAt: new Date() }, include: { job: true } });
+  }
 }
