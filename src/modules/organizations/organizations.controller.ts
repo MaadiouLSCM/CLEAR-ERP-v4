@@ -54,11 +54,11 @@ export class OrganizationsController {
   }
 
   @Get('corridors/:id')
-  @ApiOperation({ summary: 'Get corridor by ID with lanes' })
+  @ApiOperation({ summary: 'Get corridor by ID with schedules' })
   async getCorridor(@Param('id') id: string) {
     return this.prisma.corridor.findUnique({
       where: { id },
-      include: { lanes: true },
+      include: { sailingWindows: true, flightSchedules: true },
     });
   }
 
