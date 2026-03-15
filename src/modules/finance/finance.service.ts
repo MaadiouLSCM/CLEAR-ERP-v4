@@ -240,7 +240,7 @@ export class FinanceService {
       const daysOverdue = Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / 86400000);
       const entry = {
         id: inv.id, invoiceNumber: inv.invoiceNumber, clientName: inv.client.name,
-        jobRef: inv.job?.jobRef, total: inv.total, currency: inv.currency,
+        jobRef: inv.job?.ref, total: inv.total, currency: inv.currency,
         date: inv.date, dueDate: inv.dueDate, daysOverdue: Math.max(0, daysOverdue),
         status: inv.status,
       };
@@ -431,7 +431,7 @@ export class FinanceService {
 
     return jobs.map(j => ({
       jobId: j.id,
-      jobRef: j.jobRef,
+      jobRef: j.ref,
       client: j.client?.name,
       corridor: j.corridor ? `${j.corridor.originCountry} → ${j.corridor.destCountry}` : null,
       revenue: j.costSheet?.revenue || 0,
