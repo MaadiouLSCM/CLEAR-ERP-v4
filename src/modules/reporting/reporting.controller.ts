@@ -18,4 +18,7 @@ export class ReportingController {
 
   @Get('wsr') @ApiOperation({ summary: 'Generate Weekly Status Report' })
   wsr() { return this.svc.generateWSR(); }
+
+  @Get('jcr/:jobId') @ApiOperation({ summary: 'Generate Job Completion Report' })
+  jcr(@Param('jobId') jobId: string) { return this.svc.generateJCR(jobId); }
 }

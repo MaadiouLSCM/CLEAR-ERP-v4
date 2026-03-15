@@ -149,7 +149,8 @@ export const generateRecommendations = (corridorId, mode) => api.post('/consolid
 export const acceptRecommendation = (id) => api.post(`/consolidation/recommendations/${id}/accept`, {});
 export const rejectRecommendation = (id, reason) => api.post(`/consolidation/recommendations/${id}/reject`, { reason });
 
-// ── Reporting ──
+// ── Reporting (Phase 2.6 Enhanced) ──
 export const getReportTypes = () => api.get('/reports/types');
 export const generateDSR = () => api.get('/reports/dsr');
 export const generateWSR = () => api.get('/reports/wsr');
+export const generateJCR = (jobId) => api.get(`/reports/jcr/${jobId}`);

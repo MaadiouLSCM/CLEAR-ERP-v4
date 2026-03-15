@@ -70,4 +70,35 @@ export class ReportingService {
     ]);
     return { reportType: 'WSR', period: `${weekAgo.toISOString().split('T')[0]} to ${new Date().toISOString().split('T')[0]}`, delivered, inTransit, pending, newJobs };
   }
+
+  async generateJCR(jobId: string) {
+    const job = await this.prisma.job.findUnique({
+      where: { id: jobId },
+      include: {
+        client: true, expediter: true, corridor: true,
+        items: true, documents: true, purchaseOrders: { include: { supplier: true } },
+        shipments: true, trackingEvents: { orderBy: { timestamp: 'asc' } },
+        invoicesLSCM: true, greenLightRequests: true,
+      },
+    });
+    if (!job) throw new Error('Job not found');
+    const docs = job.documents || [];
+    const mandatoryTypes = ['RFC', 'VPL', 'CI', 'PL', 'BL_AWB', 'CUSTOMS_DECLARATION', 'POD'];
+    const docStatus = mandatoryTypes.map(t => ({ type: t, present: docs.some(d => d.type === t && d.status === 'VERIFIED') }));
+    const allPresent = docStatus.every(d => d.present);
+    return {
+      reportType: 'JCR', jobRef: job.ref, clientName: job.client?.name,
+      corridor: job.corridor?.name || '', mode: job.transportMode,
+      incoterm: job.incoterm, status: job.status,
+      itemCount: job.items?.length || 0, totalWeightKg: job.totalWeightKg,
+      totalCbm: job.totalCbm, declaredValue: job.declaredValue,
+      created: job.createdAt, delivered: job.actualDelivery,
+      expediter: job.expediter?.name,
+      documents: docStatus, allMandatoryPresent: allPresent,
+      timeline: (job.trackingEvents || []).map(e => ({ event: e.eventType, desc: e.description, time: e.timestamp })),
+      shipments: (job.shipments || []).map(s => ({ carrier: s.carrier, vessel: s.vesselFlight, etd: s.etd, eta: s.eta, mode: s.mode })),
+      invoices: (job.invoicesLSCM || []).map(i => ({ number: i.invoiceNumber, total: i.total, currency: i.currency, status: i.status })),
+      greenlight: (job.greenLightRequests || []).map(g => ({ status: g.status, date: g.requestDate, approvedBy: g.approvedBy })),
+    };
+  }
 }
