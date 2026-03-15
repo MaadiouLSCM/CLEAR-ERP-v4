@@ -1,355 +1,283 @@
-// ============================================================
-// CLEAR ERP v4.2 -- Master Schema
-// LSCM Ltd -- Consolidated Logistics ERP
-// Aligned with Data Model v2
-// ============================================================
+// ════════════════════════════════════════════════════════════════
+// CLEAR ERP v4.2 — COMPLETE PRISMA SCHEMA
+// Generated: March 15, 2026
+// Source: Entity Registry (168 entities, 27 domains)
+// Foundation: Prisma PDF (42 models) + all 12 Excel specifications
+// Architecture: Polymorphic Organization, NestJS + PostgreSQL
+// ════════════════════════════════════════════════════════════════
 
 generator client {
-provider      = "prisma-client-js"
-binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-provider = "postgresql"
-url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================================
-// ENUMS
+// AUTH & USERS
 // ============================================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(EXPEDITER)
+  officeId  String?
+  office    LSCMOffice? @relation(fields: [officeId], references: [id])
+  avatarUrl String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasksAssigned    Task[]         @relation("TaskAssignee")
+  tasksCreated     Task[]         @relation("TaskCreator")
+  jobsAsExpediter  Job[]          @relation("JobExpediter")
+  timeEntries      TimeEntry[]
+  auditLogs        AuditLog[]
+  notifications    Notification[]
+  emailsSent       Email[]
+}
 
 enum Role {
-ADMIN
-MANAGER
-EXPEDITER
-FINANCE
-VIEWER
-CLIENT
-AGENT
-}
-
-enum POStatus {
-DRAFT
-RFC_RECEIVED
-MATERIAL_READY
-PICKUP_SCHEDULED
-PICKED_UP
-AT_ORIGIN_WAREHOUSE
-INSPECTED
-CONSOLIDATED
-BOOKING_CONFIRMED
-IN_TRANSIT
-CUSTOMS_HOLD
-CUSTOMS_CLEARED
-GREEN_LIGHT
-DELIVERED
-POD_SIGNED
-JOB_CLOSED
-JOB_ABORTED
-}
-
-enum FreightMode {
-AIR
-SEA
-ROAD
-RAIL
-MULTIMODAL
-}
-
-enum ServicePath {
-BW_PATH
-RFC_PATH
-}
-
-enum ShipmentType {
-DIRECT
-CONSOLIDATION
-}
-
-enum ValidationMode {
-PORTAL
-WRITTEN
-}
-
-enum ValidationType {
-PFI_APPROVAL
-GL_APPROVAL
-GO_NOGO
-POC_SIGN
-POD_SIGN
-JEP_MGMT
-RFC_VALIDATION
-OTHER
-}
-
-enum ValidationDecision {
-APPROVED
-REJECTED
-GO
-NO_GO
-SIGNED
-}
-
-enum DocumentStatus {
-DRAFT
-PENDING
-APPROVED
-REJECTED
-SIGNED
-UPLOADED
-VERIFIED
-}
-
-enum DocumentKitType {
-STARTER_KIT
-GL_KIT
-PRE_ALERT_KIT
-JCR_KIT
-}
-
-enum TaskLevel {
-MILESTONE
-SUBTASK
-DOC_TASK
-}
-
-enum TaskStatus {
-PENDING
-ACTIVE
-IN_PROGRESS
-BLOCKED
-COMPLETED
-SKIPPED
-}
-
-enum TrackingSource {
-MANUAL
-PORTAL
-API_CARRIER
-IOT_TAG
-EMAIL
-DOCUMENT_TRIGGER
-}
-
-enum DelayType {
-OSU
-OSC
-POSTPONED
-}
-
-enum BookingStatus {
-REQUESTED
-CONFIRMED
-AMENDED
-CANCELLED
-}
-
-enum CustomsStatus {
-NOT_STARTED
-DOCS_SUBMITTED
-UNDER_REVIEW
-QUERY_RAISED
-DUTY_ASSESSED
-DUTY_PAID
-CLEARED
-HOLD
-RELEASED
-}
-
-enum InvoiceStatus {
-DRAFT
-SENT
-PARTIALLY_PAID
-PAID
-OVERDUE
-CANCELLED
-CREDIT_NOTE
-}
-
-enum PickupStatus {
-SCHEDULED
-DRIVER_ASSIGNED
-EN_ROUTE
-ARRIVED
-LOADING
-COMPLETED
-FAILED
-RESCHEDULED
-}
-
-enum DeliveryStatus {
-PENDING_DELIVERY
-SCHEDULED_DELIVERY
-IN_TRANSIT_DELIVERY
-ARRIVED_DELIVERY
-DELIVERED
-POD_RECEIVED
-FAILED_DELIVERY
-}
-
-enum AssetStatus {
-ACTIVE
-DISPOSED
-UNDER_MAINTENANCE
-TRANSFERRED
+  CEO
+  CFO
+  OPERATIONS_MANAGER
+  COMPLIANCE_OFFICER
+  SENIOR_EXPEDITER
+  EXPEDITER
+  HUB_OPERATOR
+  FINANCE_MANAGER
+  CUSTOMS_AGENT
+  COMMERCIAL
+  ADMIN
 }
 
 // ============================================================
-// ORGANIZATION
+// LSCM OFFICE STRUCTURE
 // ============================================================
 
 model LSCMOffice {
-id           String   @id @default(cuid())
-name         String
-country      String
-city         String
-address      String?
-phone        String?
-email        String?
-isHQ         Boolean  @default(false)
-isHub        Boolean  @default(false)
-createdAt    DateTime @default(now())
-updatedAt    DateTime @updatedAt
+  id              String       @id @default(cuid())
+  name            String
+  code            String       @unique // NG, FR, MR, GN, SN, AE, CI
+  country         String
+  city            String
+  address         String
+  phone           String?
+  status          OfficeStatus @default(ACTIVE)
+  baseCurrency    String       @default("USD")
+  timezone        String       @default("UTC")
+  workingDays     String       @default("MON,TUE,WED,THU,FRI")
+  fiscalYearStart Int          @default(1)
+  taxRegime       String?
+  createdAt       DateTime     @default(now())
 
-users        User[]
-jobs         Job[]
-fixedAssets  FixedAsset[]
-departments  Department[]
+  users          User[]
+  employees      Employee[]
+  bankAccounts   BankAccount[]
+  budgets        EntityBudget[]
+  hubs           Hub[]
+  jobs           Job[]
+  certifications Certification[]
+  assets         FixedAsset[]
+  fiscalPeriods  FiscalPeriod[]
 }
 
-model User {
-id           String   @id @default(cuid())
-email        String   @unique
-passwordHash String
-name         String
-role         Role     @default(VIEWER)
-officeId     String
-office       LSCMOffice @relation(fields: [officeId], references: [id])
-avatarUrl    String?
-phone        String?
-isActive     Boolean  @default(true)
-createdAt    DateTime @default(now())
-updatedAt    DateTime @updatedAt
-
-tasksAssigned     Task[]
-validations       Validation[]
-auditLogs         AuditLog[]
-trackingEvents    TrackingEvent[]
-notifications     Notification[]
-documentsUploaded Document[]      @relation("DocumentUploader")
-timeEntries       TimeEntry[]
+enum OfficeStatus {
+  ACTIVE
+  OPENING
+  CLOSED
 }
 
 // ============================================================
-// CLIENTS & SUPPLIERS
+// ORGANIZATIONS — Polymorphic (Clients, Suppliers, Agents, Carriers)
 // ============================================================
 
-model Client {
-id              String   @id @default(cuid())
-name            String
-code            String   @unique
-industry        String?
-contactName     String?
-contactEmail    String?
-contactPhone    String?
-billingAddress  String?
-country         String?
-servicePath     ServicePath @default(BW_PATH)
-isActive        Boolean  @default(true)
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  type      OrgType
+  country   String?
+  city      String?
+  address   String?
+  phone     String?
+  email     String?
+  website   String?
+  taxId     String?
+  tier      ClientTier?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-jobs            Job[]
-purchaseOrders  PurchaseOrder[]
+  jobsAsClient       Job[]                       @relation("JobClient")
+  posAsSupplier      PurchaseOrder[]              @relation("POSupplier")
+  contacts           ContactPerson[]
+  invoicesAsClient   InvoiceLSCM[]
+  subCertifications  SubcontractorCertification[]
+  agreements         ServiceAgreement[]
+  pricingProfiles    ContractPricingProfile[]
+  opportunities      Opportunity[]
+  qualifications     ClientQualification[]
 }
 
-model Supplier {
-id              String   @id @default(cuid())
-name            String
-code            String?  @unique
-contactName     String?
-contactEmail    String?
-contactPhone    String?
-address         String?
-country         String?
-isActive        Boolean  @default(true)
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
-
-purchaseOrders  PurchaseOrder[]
+enum OrgType {
+  CLIENT
+  SUPPLIER
+  TRANSPORT_AGENT
+  CUSTOMS_AGENT
+  FREIGHT_AGENT
+  CARRIER
 }
 
-model Agent {
-id              String   @id @default(cuid())
-name            String
-code            String?  @unique
-type            String?
-contactName     String?
-contactEmail    String?
-contactPhone    String?
-country         String?
-city            String?
-isActive        Boolean  @default(true)
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
-
-pickups         Pickup[]
-invoicesAgent   InvoiceAgent[]
+enum ClientTier {
+  PLATINUM
+  GOLD
+  SILVER
+  BRONZE
 }
 
-model Carrier {
-id              String   @id @default(cuid())
-name            String
-code            String?  @unique
-mode            FreightMode?
-contactEmail    String?
-contactPhone    String?
-isActive        Boolean  @default(true)
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+model ContactPerson {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  role           String?
+  email          String?
+  phone          String?
+  isPrimary      Boolean      @default(false)
+}
 
-bookings        Booking[]
-transportLegs   TransportLeg[]
+model ServiceAgreement {
+  id               String       @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  agreementRef     String       @unique
+  startDate        DateTime
+  endDate          DateTime?
+  services         String?      // JSON array of service types
+  status           String       @default("ACTIVE")
+  createdAt        DateTime     @default(now())
 }
 
 // ============================================================
-// JOB -- Central entity
+// CORE OPERATIONS — JOB
 // ============================================================
 
 model Job {
-id              String   @id @default(cuid())
-jobNumber       String   @unique
-clientId        String
-client          Client   @relation(fields: [clientId], references: [id])
-officeId        String
-office          LSCMOffice @relation(fields: [officeId], references: [id])
-servicePath     ServicePath @default(BW_PATH)
-shipmentType    ShipmentType @default(DIRECT)
-freightMode     FreightMode @default(SEA)
-status          POStatus @default(DRAFT)
-origin          String?
-destination     String?
-incoterm        String?
-priority        String?  @default("NORMAL")
-description     String?
-estimatedValue  Float?
-currency        String?  @default("USD")
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
-closedAt        DateTime?
+  id             String        @id @default(cuid())
+  ref            String        @unique
+  clientId       String
+  client         Organization  @relation("JobClient", fields: [clientId], references: [id])
+  poNumber       String
+  officeId       String
+  office         LSCMOffice    @relation(fields: [officeId], references: [id])
+  expediterId    String?
+  expediter      User?         @relation("JobExpediter", fields: [expediterId], references: [id])
+  corridorId     String?
+  corridor       Corridor?     @relation(fields: [corridorId], references: [id])
 
-purchaseOrders  PurchaseOrder[]
-tasks           Task[]
-validations     Validation[]
-trackingEvents  TrackingEvent[]
-documents       Document[]
-documentKits    DocumentKit[]
-shipments       Shipment[]
-invoicesLSCM    InvoiceLSCM[]
-invoicesAgent   InvoiceAgent[]
-notifications   Notification[]
-customs         CustomsDeclaration[]
-deliveries      Delivery[]
+  shipmentType   ShipmentType  @default(CONSOLIDATED)
+  transportMode  TransportMode
+  incoterm       String?
+
+  status         JobStatus     @default(RFC_RECEIVED)
+  currentPhase   Int           @default(1)
+  progress       Int           @default(0)
+
+  totalItems     Int           @default(0)
+  totalPackages  Int           @default(0)
+  totalWeightKg  Float         @default(0)
+  totalCbm       Float         @default(0)
+  declaredValue  Float?
+  currency       String        @default("USD")
+
+  requestDate     DateTime     @default(now())
+  targetPickup    DateTime?
+  targetDelivery  DateTime?
+  actualPickup    DateTime?
+  actualDelivery  DateTime?
+  etd             DateTime?
+  eta             DateTime?
+
+  pfiAmount       Float?
+  actualCost      Float?
+  margin          Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrders        PurchaseOrder[]
+  items                 Item[]
+  boxes                 Box[]
+  shipments             Shipment[]
+  consolidations        Consolidation[]
+  documents             Document[]
+  trackingEvents        TrackingEvent[]
+  tasks                 Task[]
+  emails                Email[]
+  invoicesLSCM          InvoiceLSCM[]
+  invoicesAgent         InvoiceAgent[]
+  costSheet             JobCostSheet?
+  ncrs                  NonConformity[]
+  photos                Photo[]
+  consolidationRequests ConsolidationRequest[]
+  greenLightRequests    GreenLightRequest[]
+  customsDeclarations   CustomsDeclaration[]
+  stickerOrders         StickerOrder[]
+  billingInputs         BillingInput[]
+}
+
+enum ShipmentType {
+  DIRECT_SHIP
+  CONSOLIDATED
+}
+
+enum TransportMode {
+  SEA
+  AIR
+  ROAD
+  MULTIMODAL
+}
+
+enum JobStatus {
+  RFC_RECEIVED
+  BW_IMPORTED
+  QR_STICKERS_SENT
+  DOCS_PENDING
+  DOCS_COMPLETE
+  QUOTATION
+  PFI_SENT
+  PFI_APPROVED
+  PLANNING
+  JEP_SENT
+  OPS_LAUNCHED
+  PICKUP_SCHEDULED
+  PICKUP_COMPLETED
+  AT_HUB
+  INSPECTION_DONE
+  CONSOLIDATED
+  GL_SUBMITTED
+  GL_APPROVED
+  BOOKING_CONFIRMED
+  PRE_ALERT_SENT
+  EXPORT_CUSTOMS
+  IN_TRANSIT
+  IMPORT_CUSTOMS
+  CUSTOMS_HOLD
+  CUSTOMS_CLEARED
+  DELIVERY_SCHEDULED
+  DELIVERED
+  POD_RECEIVED
+  JCR_PENDING
+  JCR_COMPLETE
+  INVOICED
+  CLOSED
+  ABORTED
 }
 
 // ============================================================
@@ -357,469 +285,1322 @@ deliveries      Delivery[]
 // ============================================================
 
 model PurchaseOrder {
-id              String   @id @default(cuid())
-poNumber        String   @unique
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-clientId        String
-client          Client   @relation(fields: [clientId], references: [id])
-supplierId      String?
-supplier        Supplier? @relation(fields: [supplierId], references: [id])
-description     String?
-freightMode     FreightMode?
-status          POStatus @default(DRAFT)
-value           Float?
-currency        String?  @default("USD")
-itemCount       Int      @default(0)
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+  id         String       @id @default(cuid())
+  jobId      String
+  job        Job          @relation(fields: [jobId], references: [id])
+  poNumber   String
+  supplierId String
+  supplier   Organization @relation("POSupplier", fields: [supplierId], references: [id])
+  value      Float?
+  currency   String       @default("USD")
+  itemCount  Int          @default(0)
+  status     POStatus     @default(ACTIVE)
+  createdAt  DateTime     @default(now())
 
-items           PurchaseOrderItem[]
-pickups         Pickup[]
-documents       Document[]
-consolidationItems ConsolidationItem[]
+  items Item[]
 }
 
-model PurchaseOrderItem {
-id              String   @id @default(cuid())
-poId            String
-po              PurchaseOrder @relation(fields: [poId], references: [id])
-lineNumber      Int
-partNumber      String?
-description     String
-quantity        Int      @default(1)
-unit            String?  @default("EA")
-weightKg        Float?
-volumeCbm       Float?
-hsCode          String?
-serialNumber    String?
-isDG            Boolean  @default(false)
-createdAt       DateTime @default(now())
+enum POStatus {
+  ACTIVE
+  PARTIALLY_SHIPPED
+  FULLY_SHIPPED
+  CANCELLED
+}
 
-qrSticker       QRSticker?
+model Item {
+  id              String     @id @default(cuid())
+  jobId           String
+  job             Job        @relation(fields: [jobId], references: [id])
+  poId            String
+  purchaseOrder   PurchaseOrder @relation(fields: [poId], references: [id])
+  boxId           String?
+  box             Box?       @relation(fields: [boxId], references: [id])
+
+  itemNumber      String
+  materialNumber  String?
+  description     String
+  quantity        Int
+  unit            String     @default("EA")
+
+  hsCode          String?
+  hsConfidence    Int?
+  countryOfOrigin String?
+  unitValue       Float?
+  currency        String     @default("USD")
+  weightKg        Float?
+
+  qrCode          String?    @unique
+  qrGenerated     Boolean    @default(false)
+  qrScannedAt     DateTime?
+
+  status    ItemStatus @default(REGISTERED)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  hsSuggestions HSCodeSuggestion[]
+}
+
+enum ItemStatus {
+  REGISTERED
+  QR_GENERATED
+  PACKED
+  PICKED_UP
+  AT_HUB
+  INSPECTED
+  CONSOLIDATED
+  IN_TRANSIT
+  DELIVERED
 }
 
 // ============================================================
-// QR STICKERS & SHIPPING MARKS
+// BOXES & SHIPPING MARKS
 // ============================================================
-
-model QRSticker {
-id              String   @id @default(cuid())
-code            String   @unique
-itemId          String   @unique
-item            PurchaseOrderItem @relation(fields: [itemId], references: [id])
-printedAt       DateTime?
-affixedAt       DateTime?
-scannedAt       DateTime?
-status          String   @default("GENERATED")
-createdAt       DateTime @default(now())
-}
 
 model Box {
-id              String   @id @default(cuid())
-boxNumber       String
-consolidationId String?
-consolidation   Consolidation? @relation(fields: [consolidationId], references: [id])
-length          Float?
-width           Float?
-height          Float?
-weightKg        Float?
-volumeCbm       Float?
-packages        Int      @default(1)
-createdAt       DateTime @default(now())
+  id             String    @id @default(cuid())
+  jobId          String
+  job            Job       @relation(fields: [jobId], references: [id])
+  smRef          String    @unique
+  packageNumber  Int
+  totalPackages  Int
+  packageType    String
+  material       String?
+  lengthCm       Float?
+  widthCm        Float?
+  heightCm       Float?
+  grossWeightKg  Float?
+  cbm            Float?
+  openable       Boolean   @default(true)
+  storageReq     String?
+  colorCode      String?
+  qrCode         String?   @unique
+  status         BoxStatus @default(REGISTERED)
+  createdAt      DateTime  @default(now())
 
-shippingMark    ShippingMark?
+  items          Item[]
+  trackingEvents TrackingEvent[]
 }
 
-model ShippingMark {
-id              String   @id @default(cuid())
-markCode        String   @unique
-boxId           String   @unique
-box             Box      @relation(fields: [boxId], references: [id])
-content         String?
-printedAt       DateTime?
-createdAt       DateTime @default(now())
-}
-
-// ============================================================
-// PICKUP
-// ============================================================
-
-model Pickup {
-id              String   @id @default(cuid())
-pickupRef       String   @unique @default(cuid())
-poId            String
-po              PurchaseOrder @relation(fields: [poId], references: [id])
-agentId         String?
-agent           Agent?   @relation(fields: [agentId], references: [id])
-scheduledDate   DateTime?
-completedDate   DateTime?
-address         String?
-city            String?
-country         String?
-contactName     String?
-contactPhone    String?
-driverName      String?
-driverPhone     String?
-vehiclePlate    String?
-status          PickupStatus @default(SCHEDULED)
-notes           String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+enum BoxStatus {
+  REGISTERED
+  SM_GENERATED
+  AT_SUPPLIER
+  PICKED_UP
+  AT_HUB
+  INSPECTED
+  CONSOLIDATED
+  LOADED
+  IN_TRANSIT
+  DELIVERED
 }
 
 // ============================================================
-// CONSOLIDATION
+// CORRIDORS & TRANSPORT
 // ============================================================
 
-model Consolidation {
-id              String   @id @default(cuid())
-consolidRef     String   @unique
-hub             String?
-totalWeightKg   Float?   @default(0)
-totalVolumeCbm  Float?   @default(0)
-totalPackages   Int?     @default(0)
-status          String   @default("OPEN")
-closedAt        DateTime?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+model Corridor {
+  id              String        @id @default(cuid())
+  name            String
+  originCountry   String
+  originCity      String?
+  destCountry     String
+  destCity        String?
+  mode            TransportMode
+  avgTransitDays  Int?
+  avgCostPerCbm   Float?
+  isActive        Boolean       @default(true)
 
-items           ConsolidationItem[]
-boxes           Box[]
-shipment        Shipment?
+  jobs                    Job[]
+  shipments               Shipment[]
+  consolidationRequests   ConsolidationRequest[]
+  sailingWindows          SeaConsolidationWindow[]
+  flightSchedules         FlightSchedule[]
+  loadingQueues           LoadingQueue[]
+  consolidationConfigs    ConsolidationConfig[]
+  airWeightBreaks         AirWeightBreak[]
 }
-
-model ConsolidationItem {
-id              String   @id @default(cuid())
-consolidationId String
-consolidation   Consolidation @relation(fields: [consolidationId], references: [id])
-poId            String
-po              PurchaseOrder @relation(fields: [poId], references: [id])
-weightKg        Float?
-volumeCbm       Float?
-packages        Int      @default(1)
-marksNumbers    String?
-createdAt       DateTime @default(now())
-}
-
-// ============================================================
-// SHIPMENT & TRANSPORT
-// ============================================================
 
 model Shipment {
-id              String   @id @default(cuid())
-shipmentRef     String   @unique
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-consolidationId String?  @unique
-consolidation   Consolidation? @relation(fields: [consolidationId], references: [id])
-freightMode     FreightMode
-origin          String?
-destination     String?
-etd             DateTime?
-eta             DateTime?
-atd             DateTime?
-ata             DateTime?
-status          String   @default("PLANNED")
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+  id              String         @id @default(cuid())
+  jobId           String
+  job             Job            @relation(fields: [jobId], references: [id])
+  corridorId      String?
+  corridor        Corridor?      @relation(fields: [corridorId], references: [id])
+  mode            TransportMode
+  carrier         String?
+  vesselFlight    String?
+  voyageNumber    String?
+  containerNumber String?
+  blAwbRef        String?
+  bookingRef      String?
+  etd             DateTime?
+  eta             DateTime?
+  actualDeparture DateTime?
+  actualArrival   DateTime?
+  status          ShipmentStatus @default(PLANNED)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-transportLegs   TransportLeg[]
-bookings        Booking[]
+  transportLegs  TransportLeg[]
+  trackingEvents TrackingEvent[]
+}
+
+enum ShipmentStatus {
+  PLANNED
+  BOOKED
+  LOADED
+  DEPARTED
+  IN_TRANSIT
+  ARRIVED
+  CUSTOMS
+  CLEARED
+  DELIVERED
 }
 
 model TransportLeg {
-id              String   @id @default(cuid())
-shipmentId      String
-shipment        Shipment @relation(fields: [shipmentId], references: [id])
-legNumber       Int
-carrierId       String?
-carrier         Carrier? @relation(fields: [carrierId], references: [id])
-mode            FreightMode
-origin          String
-destination     String
-etd             DateTime?
-eta             DateTime?
-atd             DateTime?
-ata             DateTime?
-vesselName      String?
-voyageNumber    String?
-flightNumber    String?
-containerNumber String?
-status          String   @default("PLANNED")
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+  id          String        @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment      @relation(fields: [shipmentId], references: [id])
+  legNumber   Int
+  mode        TransportMode
+  carrier     String?
+  origin      String
+  destination String
+  etd         DateTime?
+  eta         DateTime?
+  status      String        @default("PLANNED")
 }
 
-model Booking {
-id              String   @id @default(cuid())
-bookingRef      String   @unique
-shipmentId      String
-shipment        Shipment @relation(fields: [shipmentId], references: [id])
-carrierId       String
-carrier         Carrier  @relation(fields: [carrierId], references: [id])
-mode            FreightMode
-status          BookingStatus @default(REQUESTED)
-requestedDate   DateTime?
-confirmedDate   DateTime?
-cost            Float?
-currency        String?  @default("USD")
-notes           String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+model Consolidation {
+  id              String   @id @default(cuid())
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id])
+  hubId           String
+  hub             Hub      @relation(fields: [hubId], references: [id])
+  containerType   String?
+  containerNumber String?
+  totalCbm        Float    @default(0)
+  totalWeightKg   Float    @default(0)
+  totalPackages   Int      @default(0)
+  fillRatePct     Float?
+  fifoCompliancePct Float?
+  status          String   @default("PLANNED")
+  consolidatedAt  DateTime?
+  createdAt       DateTime @default(now())
 }
 
 // ============================================================
-// CUSTOMS
-// ============================================================
-
-model CustomsDeclaration {
-id              String   @id @default(cuid())
-declarationRef  String?  @unique
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-type            String   @default("IMPORT")
-country         String?
-port            String?
-status          CustomsStatus @default(NOT_STARTED)
-dutyAmount      Float?
-dutyCurrency    String?  @default("USD")
-dutyPaidDate    DateTime?
-clearedDate     DateTime?
-broker          String?
-notes           String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
-}
-
-// ============================================================
-// DELIVERY
-// ============================================================
-
-model Delivery {
-id              String   @id @default(cuid())
-deliveryRef     String   @unique @default(cuid())
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-scheduledDate   DateTime?
-actualDate      DateTime?
-recipientName   String?
-recipientPhone  String?
-address         String?
-status          DeliveryStatus @default(PENDING_DELIVERY)
-podSignedAt     DateTime?
-podSignedBy     String?
-notes           String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
-}
-
-// ============================================================
-// DOCUMENTS & KITS
-// ============================================================
-
-model Document {
-id              String   @id @default(cuid())
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-poId            String?
-po              PurchaseOrder? @relation(fields: [poId], references: [id])
-type            String
-status          DocumentStatus @default(DRAFT)
-fileName        String?
-fileUrl         String?
-fileSize        Int?
-uploadedById    String?
-uploadedBy      User?    @relation("DocumentUploader", fields: [uploadedById], references: [id])
-validatedAt     DateTime?
-notes           String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
-}
-
-model DocumentKit {
-id              String   @id @default(cuid())
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-kitType         DocumentKitType
-isComplete      Boolean  @default(false)
-completedAt     DateTime?
-missingDocs     String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
-}
-
-// ============================================================
-// VALIDATION (Dual Mode: PORTAL + WRITTEN)
-// ============================================================
-
-model Validation {
-id              String   @id @default(cuid())
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-type            ValidationType
-mode            ValidationMode @default(PORTAL)
-validatedById   String
-validatedBy     User     @relation(fields: [validatedById], references: [id])
-validatedAt     DateTime @default(now())
-decision        ValidationDecision
-proofDocUrl     String?
-notes           String?
-ipAddress       String?
-}
-
-// ============================================================
-// TRACKING EVENTS
+// TRACKING & EVENTS
 // ============================================================
 
 model TrackingEvent {
-id              String   @id @default(cuid())
-jobId           String?
-poId            String?
-eventType       String
-description     String?
-source          TrackingSource @default(MANUAL)
-triggeredById   String?
-triggeredBy     User?    @relation(fields: [triggeredById], references: [id])
-eventDate       DateTime @default(now())
-location        String?
-latitude        Float?
-longitude       Float?
-delayType       DelayType?
-delayReason     String?
-createdAt       DateTime @default(now())
+  id            String    @id @default(cuid())
+  jobId         String
+  job           Job       @relation(fields: [jobId], references: [id])
+  shipmentId    String?
+  shipment      Shipment? @relation(fields: [shipmentId], references: [id])
+  boxId         String?
+  box           Box?      @relation(fields: [boxId], references: [id])
+  eventType     String
+  description   String
+  location      String?
+  lat           Float?
+  lng           Float?
+  timestamp     DateTime  @default(now())
+  createdBy     String?
 
-job             Job?     @relation(fields: [jobId], references: [id])
+  photos Photo[]
+}
+
+model Photo {
+  id              String         @id @default(cuid())
+  jobId           String?
+  job             Job?           @relation(fields: [jobId], references: [id])
+  trackingEventId String?
+  trackingEvent   TrackingEvent? @relation(fields: [trackingEventId], references: [id])
+  url             String
+  caption         String?
+  gpsLat          Float?
+  gpsLng          Float?
+  takenAt         DateTime       @default(now())
 }
 
 // ============================================================
-// TASKS (Orchestration Engine v3.1)
+// DOCUMENTS
+// ============================================================
+
+model Document {
+  id          String    @id @default(cuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id])
+  templateRef String?
+  name        String
+  type        DocType
+  kit         DocKit?
+  fileUrl     String?
+  status      DocStatus @default(PENDING)
+  generatedAt DateTime?
+  uploadedAt  DateTime?
+  signedBy    String?
+  signedAt    DateTime?
+  signatureData String? // base64 touch signature
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum DocType {
+  RFC
+  QR_STICKERS
+  SHIPPING_MARK
+  VPL
+  MATERIAL_MANIFEST
+  RFQ
+  PFI
+  JEP
+  SI
+  PI
+  POC
+  POR
+  INSPECTION_REPORT
+  SURVEY_REPORT
+  OSD_REPORT
+  GL_COVER
+  PRE_ALERT
+  BL_AWB_CMR
+  POD
+  JCR_COVER
+  INVOICE
+  ABORT_INVOICE
+  COMMERCIAL_INVOICE
+  PACKING_LIST
+  CCVO
+  FORM_M
+  PAAR
+  EXPORT_DECLARATION
+  IMPORT_DECLARATION
+  CLEARANCE_PROOF
+  MSDS
+  DGD
+  CERTIFICATE
+  LOADING_QUEUE_REPORT
+  WITHDRAWAL_FORM
+  RELEASE_CERTIFICATE
+  TRANSFER_NOTE
+  RECONCILIATION_REPORT
+  OTHER
+}
+
+enum DocKit {
+  STARTER_KIT
+  GL_KIT
+  PRE_ALERT_KIT
+  JCR_KIT
+}
+
+enum DocStatus {
+  PENDING
+  DRAFT
+  GENERATED
+  SENT
+  SIGNED_UPLOADED
+  ORIGINAL_UPLOADED
+  VERIFIED
+  REJECTED
+}
+
+// ============================================================
+// TASKS & WORKFLOW
 // ============================================================
 
 model Task {
-id              String   @id @default(cuid())
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-orchestrationStep String?
-level           TaskLevel @default(SUBTASK)
-title           String
-description     String?
-assignedToId    String?
-assignedTo      User?    @relation(fields: [assignedToId], references: [id])
-assignedToRole  Role?
-status          TaskStatus @default(PENDING)
-slaHours        Int?
-dueDate         DateTime?
-startedAt       DateTime?
-completedAt     DateTime?
-blockedReason   String?
-dependsOnTaskId String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+  id             String     @id @default(cuid())
+  jobId          String?
+  job            Job?       @relation(fields: [jobId], references: [id])
+  assigneeId     String
+  assignee       User       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdById    String
+  createdBy      User       @relation("TaskCreator", fields: [createdById], references: [id])
+  title          String
+  description    String?
+  taskType       TaskType
+  priority       Priority   @default(MEDIUM)
+  status         TaskStatus @default(TODO)
+  dueDate        DateTime?
+  startDate      DateTime?
+  completedAt    DateTime?
+
+  blockedByTaskId String?
+  blockedByTask   Task?  @relation("TaskDependency", fields: [blockedByTaskId], references: [id])
+  blockingTasks   Task[] @relation("TaskDependency")
+
+  sourceType String? // LIFECYCLE, RENEWAL, CLOSE, AUDIT
+  sourceId   String?
+
+  renewalInstanceId String?
+  renewalInstance   RenewalInstance? @relation(fields: [renewalInstanceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TaskType {
+  OPERATIONAL
+  DOCUMENT
+  CUSTOMS
+  COMMERCIAL
+  FINANCE
+  COMPLIANCE
+  CLOSE
+  AUDIT
+  RENEWAL
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
 }
 
 // ============================================================
-// NOTIFICATIONS
+// COMMUNICATIONS
 // ============================================================
+
+model Email {
+  id          String   @id @default(cuid())
+  jobId       String?
+  job         Job?     @relation(fields: [jobId], references: [id])
+  sentById    String?
+  sentBy      User?    @relation(fields: [sentById], references: [id])
+  channel     String   @default("EMAIL")
+  direction   String   @default("OUT")
+  toAddress   String
+  fromAddress String
+  subject     String
+  body        String?
+  templateRef String?
+  status      String   @default("SENT")
+  sentAt      DateTime @default(now())
+}
 
 model Notification {
-id              String   @id @default(cuid())
-jobId           String?
-job             Job?     @relation(fields: [jobId], references: [id])
-userId          String?
-user            User?    @relation(fields: [userId], references: [id])
-channel         String   @default("EMAIL")
-recipientEmail  String?
-recipientPhone  String?
-subject         String?
-body            String?
-status          String   @default("QUEUED")
-sentAt          DateTime?
-errorMessage    String?
-createdAt       DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String?
+  jobRef    String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 // ============================================================
-// FINANCE -- Invoicing
+// WAREHOUSE & HUBS
+// ============================================================
+
+model Hub {
+  id              String    @id @default(cuid())
+  name            String
+  code            String    @unique
+  officeId        String
+  office          LSCMOffice @relation(fields: [officeId], references: [id])
+  country         String
+  city            String
+  address         String?
+  lat             Float?
+  lng             Float?
+  operatingModel  HubModel  @default(OWN)
+  operatorName    String?
+  operatorContractRef String?
+  status          HubStatus @default(ACTIVE)
+  workingDays     String    @default("MON,TUE,WED,THU,FRI")
+  workingHoursStart String  @default("08:00")
+  workingHoursEnd   String  @default("17:00")
+  timezone        String    @default("UTC")
+  createdAt       DateTime  @default(now())
+
+  zones              HubZone[]
+  costProfile        HubCostProfile?
+  regulatory         HubRegulatory?
+  equipment          HubEquipment[]
+  freeTimeOverrides  HubFreeTimeOverride[]
+  consolidations     Consolidation[]
+  stockItems         StockItem[]
+  capacitySnapshots  CapacitySnapshot[]
+  loadingQueues      LoadingQueue[]
+}
+
+enum HubModel {
+  OWN
+  AGENT
+  SHARED
+}
+
+enum HubStatus {
+  ACTIVE
+  PLANNED
+  CLOSED
+  SEASONAL
+}
+
+model HubZone {
+  id                   String   @id @default(cuid())
+  hubId                String
+  hub                  Hub      @relation(fields: [hubId], references: [id])
+  name                 String
+  code                 String
+  type                 ZoneType
+  capacityCbm          Float
+  capacityWeightKg     Float?
+  currentOccupancyCbm  Float    @default(0)
+  climateControlled    Boolean  @default(false)
+  temperatureMin       Float?
+  temperatureMax       Float?
+  rackLevels           Int?
+  createdAt            DateTime @default(now())
+
+  stockItems StockItem[]
+}
+
+enum ZoneType {
+  INDOOR
+  OUTDOOR
+  COVERED_OUTDOOR
+  COLD_CHAIN
+  DG
+  BONDED
+  OVERSIZED
+  TRANSIT
+}
+
+model HubCostProfile {
+  id                     String   @id @default(cuid())
+  hubId                  String   @unique
+  hub                    Hub      @relation(fields: [hubId], references: [id])
+  currency               String   @default("USD")
+  freeTimeDaysDefault    Int      @default(14)
+  storageRatePerCbmPerDay Float   @default(1.0)
+  handlingInRate         Float?
+  handlingOutRate        Float?
+  forkliftRatePerHour    Float?
+  craneRatePerHour       Float?
+  overtimeMultiplier     Float    @default(1.5)
+  minimumCharge          Float?
+  insuranceSurchargePct  Float?
+  dgSurchargePct         Float?
+  effectiveDate          DateTime @default(now())
+}
+
+model HubFreeTimeOverride {
+  id           String   @id @default(cuid())
+  hubId        String
+  hub          Hub      @relation(fields: [hubId], references: [id])
+  clientId     String?
+  contractRef  String?
+  freeTimeDays Int
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  approvedBy   String?
+}
+
+model HubRegulatory {
+  id                 String  @id @default(cuid())
+  hubId              String  @unique
+  hub                Hub     @relation(fields: [hubId], references: [id])
+  regimeType         String
+  customsAuthority   String?
+  dgPermitted        Boolean @default(false)
+  dgClassesPermitted String?
+  maxStorageDays     Int?
+  reportingFrequency String?
+}
+
+model HubEquipment {
+  id              String   @id @default(cuid())
+  hubId           String
+  hub             Hub      @relation(fields: [hubId], references: [id])
+  type            String
+  capacity        String?
+  status          String   @default("OPERATIONAL")
+  nextServiceDate DateTime?
+}
+
+model StockItem {
+  id                      String   @id @default(cuid())
+  hubId                   String
+  hub                     Hub      @relation(fields: [hubId], references: [id])
+  zoneId                  String?
+  zone                    HubZone? @relation(fields: [zoneId], references: [id])
+  smRef                   String
+  jobRef                  String
+  clientName              String
+  receivedAt              DateTime
+  cbm                     Float
+  weightKg                Float
+  packages                Int
+  freeTimeDays            Int
+  storageCostAccumulated  Float    @default(0)
+  status                  String   @default("RECEIVED")
+  fifoScore               Int      @default(0)
+  priority                String   @default("MEDIUM")
+  createdAt               DateTime @default(now())
+
+  queuePositions QueuePosition[]
+  stockMovements StockMovement[]
+}
+
+model StockMovement {
+  id          String    @id @default(cuid())
+  stockItemId String
+  stockItem   StockItem @relation(fields: [stockItemId], references: [id])
+  type        String    // INBOUND_RECEPTION, INTERNAL_TRANSFER, OUTBOUND_DISPATCH
+  fromZone    String?
+  toZone      String?
+  quantity    Int?
+  notes       String?
+  createdBy   String?
+  timestamp   DateTime  @default(now())
+}
+
+model CapacitySnapshot {
+  id              String   @id @default(cuid())
+  hubId           String
+  hub             Hub      @relation(fields: [hubId], references: [id])
+  date            DateTime
+  occupiedCbm     Float
+  availableCbm    Float
+  utilizationPct  Float
+  itemsCount      Int
+  projectedInflow  Float?
+  projectedOutflow Float?
+  createdAt       DateTime @default(now())
+}
+
+// ============================================================
+// FIFO QUEUE ENGINE
+// ============================================================
+
+model LoadingQueue {
+  id                        String   @id @default(cuid())
+  hubId                     String
+  hub                       Hub      @relation(fields: [hubId], references: [id])
+  corridorId                String
+  corridor                  Corridor @relation(fields: [corridorId], references: [id])
+  mode                      TransportMode
+  status                    String   @default("OPEN") // OPEN, FROZEN, CLOSED
+  totalItems                Int      @default(0)
+  totalWeightKg             Float    @default(0)
+  totalCbm                  Float    @default(0)
+  nextConsolidationDate     DateTime?
+  queueDepthDays            Int?
+  lastRecalculated          DateTime?
+  createdAt                 DateTime @default(now())
+
+  positions QueuePosition[]
+}
+
+model QueuePosition {
+  id                       String       @id @default(cuid())
+  queueId                  String
+  queue                    LoadingQueue @relation(fields: [queueId], references: [id])
+  stockItemId              String
+  stockItem                StockItem    @relation(fields: [stockItemId], references: [id])
+  rank                     Int
+  priorityScore            Int          @default(0) // 0-1000
+  daysInStock              Int          @default(0)
+  priorityOverride         String?      // NONE, CLIENT_URGENT, CONTRACTUAL, MANAGEMENT
+  overrideReason           String?
+  overrideBy               String?
+  overrideDate             DateTime?
+  assignedToConsolidationId String?
+  assignedDate             DateTime?
+  status                   String       @default("QUEUED") // QUEUED, ASSIGNED, LOADED, SHIPPED, HOLD, BLOCKED
+  createdAt                DateTime     @default(now())
+}
+
+model PriorityRule {
+  id          String  @id @default(cuid())
+  ruleName    String
+  factor      String
+  weight      Int     // 0-100
+  calculation String
+  appliesTo   String  @default("ALL") // ALL, CLIENT_SPECIFIC, CONTRACT_SPECIFIC
+  clientId    String?
+  contractRef String?
+  isActive    Boolean @default(true)
+}
+
+model FIFOViolation {
+  id                String   @id @default(cuid())
+  queuePositionId   String
+  consolidationRef  String?
+  violationType     String
+  justification     String
+  approvedBy        String?
+  createdAt         DateTime @default(now())
+}
+
+// ============================================================
+// TRANSPORT CONSOLIDATION ENGINE
+// ============================================================
+
+model ConsolidationRequest {
+  id               String        @id @default(cuid())
+  jobId            String
+  job              Job           @relation(fields: [jobId], references: [id])
+  mode             TransportMode
+  corridorId       String
+  corridor         Corridor      @relation(fields: [corridorId], references: [id])
+  cargoPackages    Int
+  cargoWeightKg    Float
+  cargoCbm         Float
+  cargoValue       Float?
+  dgClass          String?
+  temperatureSensitive Boolean   @default(false)
+  oversized        Boolean       @default(false)
+  urgency          Urgency       @default(FLEXIBLE)
+  earliestShipDate DateTime
+  latestShipDate   DateTime
+  clientPriority   String?
+  status           String        @default("PENDING")
+  createdAt        DateTime      @default(now())
+
+  recommendations  ConsolidationRecommendation[]
+}
+
+enum Urgency {
+  IMMEDIATE
+  FLEXIBLE
+  DEFERRED
+}
+
+model ConsolidationRecommendation {
+  id                  String   @id @default(cuid())
+  mode                TransportMode
+  corridorId          String
+  consolidationLevel  String   // MAXIMUM, OPTIMAL, MINIMUM
+  recommendedDate     DateTime
+  containerType       String?  // For sea
+  uldType             String?  // For air
+  vehicleType         String?  // For road
+  fillRatePct         Float?
+  estimatedCost       Float?
+  individualCostSum   Float?
+  savingsAmount       Float?
+  savingsPct          Float?
+  transitTimeDays     Int?
+  status              String   @default("SUGGESTED")
+  expiresAt           DateTime?
+  createdAt           DateTime @default(now())
+
+  requests ConsolidationRequest[]
+}
+
+model ConsolidationConfig {
+  id                      String   @id @default(cuid())
+  mode                    TransportMode
+  corridorId              String?
+  corridor                Corridor? @relation(fields: [corridorId], references: [id])
+  maxWaitDaysFlexible     Int      @default(10)
+  maxWaitDaysDeferred     Int      @default(30)
+  minFillRateToShip       Float    @default(65)
+  minSavingsPctToRecommend Float   @default(10)
+  isActive                Boolean  @default(true)
+}
+
+model SeaConsolidationWindow {
+  id          String   @id @default(cuid())
+  corridorId  String
+  corridor    Corridor @relation(fields: [corridorId], references: [id])
+  carrier     String
+  serviceName String
+  frequency   String
+  sailingDay  String
+  cutoffDay   String
+  cutoffTime  String
+}
+
+model FlightSchedule {
+  id                 String   @id @default(cuid())
+  corridorId         String
+  corridor           Corridor @relation(fields: [corridorId], references: [id])
+  carrier            String
+  flightNumber       String?
+  frequency          String
+  departureAirport   String
+  arrivalAirport     String
+  cutoffHoursBefore  Int      @default(6)
+  transitTimeHours   Int
+}
+
+model AirWeightBreak {
+  id          String   @id @default(cuid())
+  corridorId  String
+  corridor    Corridor @relation(fields: [corridorId], references: [id])
+  carrier     String
+  weightMin   Float
+  weightMax   Float
+  ratePerKg   Float
+  currency    String   @default("USD")
+}
+
+// ============================================================
+// BILLING & PRICING ENGINE
+// ============================================================
+
+model ContractPricingProfile {
+  id                String       @id @default(cuid())
+  contractRef       String       @unique
+  clientId          String
+  client            Organization @relation(fields: [clientId], references: [id])
+  effectiveDate     DateTime
+  expiryDate        DateTime?
+  accountingCurrency String     @default("USD")
+  vatApplicable     Boolean      @default(false)
+  vatRate           Float?
+  whtApplicable     Boolean      @default(false)
+  whtRate           Float?
+  handlingPct       Float?
+  paymentTerms      String?      // Net30, Net60
+  paymentDayRule    String?      // END_OF_MONTH, RECEIPT_DATE
+  pfiRequired       Boolean      @default(true)
+  status            String       @default("ACTIVE")
+  createdAt         DateTime     @default(now())
+
+  rateCategories RateCategory[]
+  surchargeRules SurchargeRule[]
+  taxRules       TaxRule[]
+}
+
+model RateCategory {
+  id                String                @id @default(cuid())
+  pricingProfileId  String
+  pricingProfile    ContractPricingProfile @relation(fields: [pricingProfileId], references: [id])
+  categoryCode      String
+  name              String
+  billingUnit       String // PER_SHIPMENT, PER_KG, PER_TON, PER_CBM, PER_CONTAINER, PER_FT, PER_DAY, LUMP_SUM
+  currencyOverride  String?
+
+  rateLines RateLine[]
+}
+
+model RateLine {
+  id                 String       @id @default(cuid())
+  rateCategoryId     String
+  rateCategory       RateCategory @relation(fields: [rateCategoryId], references: [id])
+  serviceDescription String
+  rateType           String       // FIXED, TIERED_BY_WEIGHT, TIERED_BY_VOLUME, TIERED_BY_DISTANCE, PER_UNIT, FORMULA
+  amount             Float?
+  minCharge          Float?
+  currency           String?
+
+  rateTiers RateTier[]
+}
+
+model RateTier {
+  id          String   @id @default(cuid())
+  rateLineId  String
+  rateLine    RateLine @relation(fields: [rateLineId], references: [id])
+  dimension   String   // WEIGHT_KG, VOLUME_CBM, DISTANCE_KM, WEIGHT_TON
+  tierFrom    Float
+  tierTo      Float?
+  rateAmount  Float
+  minCharge   Float?
+  zoneId      String?
+  zone        BillingZone? @relation(fields: [zoneId], references: [id])
+}
+
+model BillingZone {
+  id        String   @id @default(cuid())
+  zoneName  String   @unique
+  countries String   // comma-separated
+  createdAt DateTime @default(now())
+
+  rateTiers RateTier[]
+}
+
+model BillingInput {
+  id              String   @id @default(cuid())
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id])
+  mode            TransportMode
+  originZone      String?
+  destZone        String?
+  weightKg        Float
+  volumeCbm       Float
+  containerType   String?
+  distanceKm      Float?
+  seiFlag         Boolean  @default(false)
+  dgFlag          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  billingLines BillingLine[]
+}
+
+model BillingLine {
+  id              String       @id @default(cuid())
+  billingInputId  String
+  billingInput    BillingInput @relation(fields: [billingInputId], references: [id])
+  rateLineRef     String?
+  description     String
+  quantity        Float        @default(1)
+  unitPrice       Float
+  total           Float
+  taxable         Boolean      @default(true)
+}
+
+model SurchargeRule {
+  id                String                @id @default(cuid())
+  pricingProfileId  String
+  pricingProfile    ContractPricingProfile @relation(fields: [pricingProfileId], references: [id])
+  surchargeType     String
+  trigger           String
+  calculationType   String // FIXED, PERCENTAGE
+  amount            Float?
+  percentage        Float?
+}
+
+model TaxRule {
+  id                String                @id @default(cuid())
+  pricingProfileId  String
+  pricingProfile    ContractPricingProfile @relation(fields: [pricingProfileId], references: [id])
+  taxType           String // VAT, WHT, OTHER
+  rate              Float
+  applicableTo      String?
+  handlingMode      String? // ADDED, DEDUCTED_BY_CLIENT
+}
+
+// ============================================================
+// HS CODE INTELLIGENCE
+// ============================================================
+
+model HSCodeWCO {
+  id            String @id @default(cuid())
+  hsCode6       String @unique
+  chapter       String
+  heading       String
+  subheading    String
+  descriptionEn String
+  descriptionFr String?
+  section       String?
+  unitsOfQty    String?
+  lastUpdated   DateTime?
+
+  countryExtensions HSCodeCountry[]
+}
+
+model HSCodeCountry {
+  id               String   @id @default(cuid())
+  countryCode      String
+  hsCodeFull       String
+  hsCodeWco6       String
+  wcoCode          HSCodeWCO @relation(fields: [hsCodeWco6], references: [hsCode6])
+  localDescription String?
+  dutyRatePct      Float?
+  surchargePct     Float?
+  vatApplicable    Boolean  @default(true)
+  exemptionCodes   String?
+  restricted       Boolean  @default(false)
+  requiresPermit   Boolean  @default(false)
+  lastUpdated      DateTime?
+
+  @@unique([countryCode, hsCodeFull])
+}
+
+model HSCodeAlias {
+  id                String @id @default(cuid())
+  aliasText         String
+  hsCode6Suggestion String
+  confidence        String // HIGH, MEDIUM, LOW
+  industryContext   String? // OIL_GAS, MINING, PHARMA, GENERAL
+}
+
+model HSCodeSuggestion {
+  id              String @id @default(cuid())
+  itemId          String
+  item            Item   @relation(fields: [itemId], references: [id])
+  source          String // SUPPLIER, HISTORICAL, WCO
+  suggestedCode   String
+  confidenceScore Int    // 0-100
+  dutyImpact      Float?
+  rank            Int
+  selectedByUser  Boolean @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model HSCodeHistory {
+  id             String   @id @default(cuid())
+  materialNumber String
+  hsCode         String
+  timesUsed      Int      @default(1)
+  customsAccepted Int     @default(0)
+  lastUsed       DateTime
+  supplierName   String?
+}
+
+model CustomsDeclaration {
+  id              String   @id @default(cuid())
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id])
+  declarationType String   // EXPORT, IMPORT
+  country         String
+  declarationRef  String?
+  status          String   @default("PENDING")
+  submittedAt     DateTime?
+  clearedAt       DateTime?
+  createdAt       DateTime @default(now())
+}
+
+model GreenLightRequest {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id])
+  requestDate DateTime @default(now())
+  status      String   @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED
+  approvedBy  String?
+  approvedAt  DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+// ============================================================
+// FINANCE — INVOICING & COST
 // ============================================================
 
 model InvoiceLSCM {
-id              String   @id @default(cuid())
-invoiceNumber   String   @unique
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-type            String   @default("STANDARD")
-status          InvoiceStatus @default(DRAFT)
-subtotal        Float    @default(0)
-tax             Float    @default(0)
-total           Float    @default(0)
-currency        String   @default("USD")
-issuedDate      DateTime?
-dueDate         DateTime?
-paidDate        DateTime?
-paidAmount      Float    @default(0)
-notes           String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+  id            String        @id @default(cuid())
+  jobId         String
+  job           Job           @relation(fields: [jobId], references: [id])
+  clientId      String
+  client        Organization  @relation(fields: [clientId], references: [id])
+  invoiceNumber String        @unique
+  date          DateTime
+  dueDate       DateTime
+  currency      String        @default("USD")
+  subtotal      Float
+  tax           Float         @default(0)
+  total         Float
+  status        InvoiceStatus @default(DRAFT)
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
 
-lineItems       InvoiceLineItem[]
+  lineItems InvoiceLineItem[]
 }
 
 model InvoiceLineItem {
-id              String   @id @default(cuid())
-invoiceId       String
-invoice         InvoiceLSCM @relation(fields: [invoiceId], references: [id])
-description     String
-quantity        Float    @default(1)
-unitPrice       Float    @default(0)
-amount          Float    @default(0)
-createdAt       DateTime @default(now())
+  id          String      @id @default(cuid())
+  invoiceId   String
+  invoice     InvoiceLSCM @relation(fields: [invoiceId], references: [id])
+  description String
+  quantity    Float        @default(1)
+  unitPrice   Float
+  total       Float
+  taxable     Boolean      @default(true)
 }
 
 model InvoiceAgent {
-id              String   @id @default(cuid())
-invoiceRef      String   @unique
-jobId           String
-job             Job      @relation(fields: [jobId], references: [id])
-agentId         String
-agent           Agent    @relation(fields: [agentId], references: [id])
-amount          Float    @default(0)
-currency        String   @default("USD")
-status          InvoiceStatus @default(DRAFT)
-receivedDate    DateTime?
-paidDate        DateTime?
-notes           String?
-createdAt       DateTime @default(now())
-updatedAt       DateTime @updatedAt
+  id              String        @id @default(cuid())
+  jobId           String
+  job             Job           @relation(fields: [jobId], references: [id])
+  agentName       String
+  invoiceRef      String
+  date            DateTime
+  currency        String
+  amount          Float
+  category        String
+  verifiedBy      String?
+  approvedBy      String?
+  varianceFlagged Boolean       @default(false)
+  status          InvoiceStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  SENT
+  APPROVED
+  PAID
+  OVERDUE
+  DISPUTED
+  CANCELLED
+}
+
+model JobCostSheet {
+  id                 String @id @default(cuid())
+  jobId              String @unique
+  job                Job    @relation(fields: [jobId], references: [id])
+  revenue            Float  @default(0)
+  totalAgentCosts    Float  @default(0)
+  totalInternalCosts Float  @default(0)
+  grossProfit        Float  @default(0)
+  grossMarginPct     Float  @default(0)
+  updatedAt          DateTime @updatedAt
+}
+
+model BankAccount {
+  id            String     @id @default(cuid())
+  officeId      String
+  office        LSCMOffice @relation(fields: [officeId], references: [id])
+  bankName      String
+  accountNumber String
+  currency      String
+  balance       Float      @default(0)
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+}
+
+model FiscalPeriod {
+  id       String     @id @default(cuid())
+  officeId String
+  office   LSCMOffice @relation(fields: [officeId], references: [id])
+  year     Int
+  month    Int
+  status   String     @default("OPEN") // OPEN, CLOSED, LOCKED
+  closedAt DateTime?
+  closedBy String?
 }
 
 // ============================================================
-// HR & WORKFORCE
+// BUDGET
 // ============================================================
 
-model Department {
-id              String   @id @default(cuid())
-name            String
-officeId        String
-office          LSCMOffice @relation(fields: [officeId], references: [id])
-managerId       String?
-createdAt       DateTime @default(now())
+model EntityBudget {
+  id          String     @id @default(cuid())
+  officeId    String
+  office      LSCMOffice @relation(fields: [officeId], references: [id])
+  year        Int
+  type        String     @default("OPERATIONAL") // OPERATIONAL, CAPEX
+  totalAmount Float      @default(0)
+  status      String     @default("DRAFT")
+  createdAt   DateTime   @default(now())
+}
 
-timeEntries     TimeEntry[]
+// ============================================================
+// COMPLIANCE & CERTIFICATIONS
+// ============================================================
+
+model Certification {
+  id            String      @id @default(cuid())
+  officeId      String?
+  office        LSCMOffice? @relation(fields: [officeId], references: [id])
+  certType      String
+  scope         String
+  issuer        String
+  certNumber    String
+  issueDate     DateTime
+  expiryDate    DateTime
+  status        CertStatus  @default(ACTIVE)
+  lastAuditDate DateTime?
+  nextAuditDate DateTime?
+  createdAt     DateTime    @default(now())
+
+  audits           CertificationAudit[]
+  renewalInstances RenewalInstance[]
+}
+
+enum CertStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  SUSPENDED
+  RENEWED
+}
+
+model CertificationAudit {
+  id            String        @id @default(cuid())
+  certId        String
+  certification Certification @relation(fields: [certId], references: [id])
+  auditType     String
+  auditor       String
+  date          DateTime
+  outcome       String
+  findingsCount Int           @default(0)
+  createdAt     DateTime      @default(now())
+
+  findings AuditFinding[]
+}
+
+model AuditFinding {
+  id          String             @id @default(cuid())
+  auditId     String
+  audit       CertificationAudit @relation(fields: [auditId], references: [id])
+  findingType String
+  clause      String?
+  description String
+  status      String             @default("OPEN")
+  capaRef     String?
+  dueDate     DateTime?
+}
+
+model SubcontractorCertification {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  certType       String
+  certNumber     String?
+  expiryDate     DateTime?
+  status         String       @default("ACTIVE")
+}
+
+// ============================================================
+// RENEWAL ENGINE
+// ============================================================
+
+model RenewalProcessTemplate {
+  id               String   @id @default(cuid())
+  certType         String   @unique
+  processName      String
+  totalLeadTimeDays Int
+  createdAt        DateTime @default(now())
+
+  steps     RenewalStep[]
+  instances RenewalInstance[]
+}
+
+model RenewalStep {
+  id                      String                 @id @default(cuid())
+  templateId              String
+  template                RenewalProcessTemplate @relation(fields: [templateId], references: [id])
+  stepNumber              Int
+  stepName                String
+  triggerDaysBeforeExpiry  Int
+  durationDays            Int
+  assigneeRole            Role
+  description             String?
+  requiredDocuments       String? // JSON
+  blocking                Boolean @default(true)
+  escalationAfterDays     Int?
+  escalationToRole        Role?
+}
+
+model RenewalInstance {
+  id               String                  @id @default(cuid())
+  certId           String
+  certification    Certification           @relation(fields: [certId], references: [id])
+  templateId       String
+  template         RenewalProcessTemplate  @relation(fields: [templateId], references: [id])
+  targetExpiryDate DateTime
+  processStartDate DateTime?
+  status           String                  @default("NOT_STARTED")
+  currentStep      Int                     @default(0)
+  totalSteps       Int
+  completedAt      DateTime?
+  newCertId        String?
+  createdAt        DateTime                @default(now())
+
+  tasks Task[]
+}
+
+// ============================================================
+// QMS
+// ============================================================
+
+model NonConformity {
+  id           String   @id @default(cuid())
+  jobId        String?
+  job          Job?     @relation(fields: [jobId], references: [id])
+  ncrNumber    String   @unique
+  source       String
+  type         String
+  severity     String
+  description  String
+  evidence     String?
+  containment  String?
+  status       String   @default("OPEN")
+  assigneeId   String?
+  dueDate      DateTime?
+  createdAt    DateTime @default(now())
+
+  capas CAPA[]
+}
+
+model CAPA {
+  id            String        @id @default(cuid())
+  ncrId         String
+  ncr           NonConformity @relation(fields: [ncrId], references: [id])
+  actionType    String
+  rootCause     String?
+  actions       String // JSON
+  responsible   String?
+  targetDate    DateTime?
+  effectiveness String?
+  status        String        @default("OPEN")
+  createdAt     DateTime      @default(now())
+}
+
+// ============================================================
+// STICKER MANAGEMENT
+// ============================================================
+
+model StickerOrder {
+  id               String   @id @default(cuid())
+  jobId            String
+  job              Job      @relation(fields: [jobId], references: [id])
+  stickerType      String   // QR_ITEM, SHIPPING_MARK
+  quantity         Int
+  quotationAmount  Float?
+  quotationStatus  String   @default("PENDING") // PENDING, VALIDATED, REJECTED
+  rejectionReason  String?
+  productionDate   DateTime?
+  createdAt        DateTime @default(now())
+
+  dispatches StickerDispatch[]
+}
+
+model StickerDispatch {
+  id              String       @id @default(cuid())
+  stickerOrderId  String
+  stickerOrder    StickerOrder @relation(fields: [stickerOrderId], references: [id])
+  dispatchDate    DateTime
+  trackingNumber  String?
+  contactPerson   String?
+  carrier         String?
+  status          String       @default("DISPATCHED")
+  receivedDate    DateTime?
+  receivedBy      String?
+}
+
+// ============================================================
+// HR
+// ============================================================
+
+model Employee {
+  id              String     @id @default(cuid())
+  officeId        String
+  office          LSCMOffice @relation(fields: [officeId], references: [id])
+  name            String
+  position        String
+  department      String
+  contractType    String     @default("CDI")
+  hireDate        DateTime
+  status          String     @default("ACTIVE")
+  costRatePerHour Float?
+
+  timeEntries TimeEntry[]
 }
 
 model TimeEntry {
-id              String   @id @default(cuid())
-userId          String
-user            User     @relation(fields: [userId], references: [id])
-departmentId    String?
-department      Department? @relation(fields: [departmentId], references: [id])
-date            DateTime
-hours           Float
-isBillable      Boolean  @default(true)
-jobReference    String?
-description     String?
-createdAt       DateTime @default(now())
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  employeeId      String?
+  employee        Employee? @relation(fields: [employeeId], references: [id])
+  date            DateTime
+  jobRef          String?
+  taskDescription String?
+  hours           Float
+  billable        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
 }
 
 // ============================================================
@@ -827,21 +1608,94 @@ createdAt       DateTime @default(now())
 // ============================================================
 
 model FixedAsset {
-id                      String   @id @default(cuid())
-officeId                String
-office                  LSCMOffice @relation(fields: [officeId], references: [id])
-name                    String
-category                String
-acquisitionDate         DateTime
-acquisitionCost         Float
-depreciationMethod      String   @default("STRAIGHT_LINE")
-usefulLifeMonths        Int
-salvageValue            Float    @default(0)
-accumulatedDepreciation Float    @default(0)
-netBookValue            Float
-status                  AssetStatus @default(ACTIVE)
-createdAt               DateTime @default(now())
-updatedAt               DateTime @updatedAt
+  id                       String     @id @default(cuid())
+  officeId                 String
+  office                   LSCMOffice @relation(fields: [officeId], references: [id])
+  name                     String
+  category                 String
+  acquisitionDate          DateTime
+  acquisitionCost          Float
+  depreciationMethod       String     @default("STRAIGHT_LINE")
+  usefulLifeMonths         Int
+  salvageValue             Float      @default(0)
+  accumulatedDepreciation  Float      @default(0)
+  netBookValue             Float
+  status                   String     @default("ACTIVE")
+}
+
+// ============================================================
+// COMMERCIAL
+// ============================================================
+
+model Opportunity {
+  id              String       @id @default(cuid())
+  clientId        String
+  client          Organization @relation(fields: [clientId], references: [id])
+  title           String
+  stage           String       @default("PROSPECT") // PROSPECT, QUALIFIED, PROPOSAL, NEGOTIATION, WON, LOST
+  estimatedValue  Float?
+  probability     Float?
+  expectedClose   DateTime?
+  assignedTo      String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model ClientQualification {
+  id         String       @id @default(cuid())
+  clientId   String
+  client     Organization @relation(fields: [clientId], references: [id])
+  score      Int          // 0-100
+  criteria   String?      // JSON
+  assessedBy String?
+  assessedAt DateTime     @default(now())
+}
+
+// ============================================================
+// GOVERNANCE & KPIs
+// ============================================================
+
+model GovernanceKPI {
+  id             String @id @default(cuid())
+  kpiCode        String @unique
+  name           String
+  category       String
+  calculation    String
+  sourceEntities String
+  greenMin       String?
+  yellowMin      String?
+  orangeMin      String?
+  redMin         String?
+  blackMin       String?
+  display        String?
+  recommendation String?
+  isActive       Boolean @default(true)
+
+  targets GovernanceTarget[]
+  alerts  GovernanceAlert[]
+}
+
+model GovernanceTarget {
+  id          String        @id @default(cuid())
+  kpiId       String
+  kpi         GovernanceKPI @relation(fields: [kpiId], references: [id])
+  period      String
+  targetValue Float
+  actualValue Float?
+  status      String?
+}
+
+model GovernanceAlert {
+  id             String        @id @default(cuid())
+  kpiId          String
+  kpi            GovernanceKPI @relation(fields: [kpiId], references: [id])
+  alertLevel     String
+  currentValue   Float
+  threshold      Float
+  triggeredAt    DateTime      @default(now())
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
 }
 
 // ============================================================
@@ -849,15 +1703,15 @@ updatedAt               DateTime @updatedAt
 // ============================================================
 
 model AuditLog {
-id              String   @id @default(cuid())
-userId          String
-user            User     @relation(fields: [userId], references: [id])
-action          String
-entityType      String
-entityId        String
-fieldChanged    String?
-oldValue        String?
-newValue        String?
-ipAddress       String?
-timestamp       DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  entityType   String
+  entityId     String
+  action       String
+  fieldChanged String?
+  oldValue     String?
+  newValue     String?
+  ipAddress    String?
+  timestamp    DateTime @default(now())
 }

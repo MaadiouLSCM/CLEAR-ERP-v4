@@ -1,9 +1,9 @@
-FROM node:20-slim
-RUN apt-get update -y && apt-get install -y openssl libssl-dev && rm -rf /var/lib/apt/lists/*
+FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
 RUN npx prisma generate
 RUN npm run build
-CMD npx prisma db push --accept-data-loss && node dist/main.js
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+EXPOSE 3000
