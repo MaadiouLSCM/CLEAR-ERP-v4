@@ -1,2 +1,8 @@
 [phases.setup]
-aptPkgs = ["...", "openssl", "libssl-dev"]
+nixPkgs = ["...", "openssl"]
+aptPkgs = ["...", "openssl", "libssl-dev", "libssl3"]
+
+[variables]
+PRISMA_SCHEMA_ENGINE_TYPE = "binary"
+PRISMA_QUERY_ENGINE_TYPE = "binary"
+PRISMA_CLI_QUERY_ENGINE_TYPE = "binary"
